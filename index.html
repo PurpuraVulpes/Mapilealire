@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="purple">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,101 +11,213 @@
 
     <!-- PARTICULES FOND -->
     <div class="particles" id="particles"></div>
-    
 
-    <!-- HEADER -->
-    <header>
-        <div class="logo">📚</div>
-        <h1>Ma Pile à Livres</h1>
-        <p class="subtitle">Organise tes lectures, découvre ton prochain livre !</p>
-    </header>
+    <!-- NAV -->
+    <nav class="main-nav">
+        <button class="nav-btn active" onclick="switchTab('home', this)">📚 Bibliothèque</button>
+        <button class="nav-btn" onclick="switchTab('settings', this)">⚙️ Paramètres</button>
+    </nav>
 
-    <!-- STATS -->
-    <section class="stats-bar">
-        <div class="stat">
-            <span class="stat-number" id="totalBooks">0</span>
-            <span class="stat-label">Total</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number" id="toReadBooks">0</span>
-            <span class="stat-label">À lire</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number" id="readBooks">0</span>
-            <span class="stat-label">Lus</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number" id="avgRating">-</span>
-            <span class="stat-label">Note moy.</span>
-        </div>
-    </section>
+    <!-- ==================== PAGE HOME ==================== -->
+    <div class="page active" id="page-home">
 
-    <!-- FORMULAIRE AJOUT -->
-    <section class="add-section">
-        <h2>➕ Ajouter un livre</h2>
-        <form id="addBookForm">
-            <div class="form-row">
-                <div class="input-group">
-                    <label for="bookTitle">Titre</label>
-                    <input type="text" id="bookTitle" placeholder="Ex : Le Petit Prince" required>
-                </div>
-                <div class="input-group">
-                    <label for="bookAuthor">Auteur</label>
-                    <input type="text" id="bookAuthor" placeholder="Ex : Saint-Exupéry" required>
-                </div>
-                <div class="input-group">
-                    <label for="bookGenre">Genre</label>
-                    <select id="bookGenre">
-                        <option value="Roman">📖 Roman</option>
-                        <option value="SF">🚀 Science-Fiction</option>
-                        <option value="Fantasy">🐉 Fantasy</option>
-                        <option value="Thriller">🔪 Thriller</option>
-                        <option value="BD">🎨 BD / Manga</option>
-                        <option value="Essai">📝 Essai</option>
-                        <option value="Poésie">🌸 Poésie</option>
-                        <option value="Histoire">🏛️ Histoire</option>
-                        <option value="Dev perso">🧠 Dév. personnel</option>
-                        <option value="Autre">📦 Autre</option>
-                    </select>
-                </div>
+        <!-- HEADER -->
+        <header>
+            <div class="logo">📚</div>
+            <h1>Ma Pile à Livres</h1>
+            <p class="subtitle">Organise tes lectures, découvre ton prochain livre !</p>
+        </header>
+
+        <!-- STATS -->
+        <section class="stats-bar">
+            <div class="stat">
+                <span class="stat-number" id="totalBooks">0</span>
+                <span class="stat-label">Total</span>
             </div>
-            <button type="submit" class="btn btn-add">
-                <span>📥</span> Ajouter à la pile
+            <div class="stat">
+                <span class="stat-number" id="toReadBooks">0</span>
+                <span class="stat-label">À lire</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="readBooks">0</span>
+                <span class="stat-label">Lus</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="avgRating">-</span>
+                <span class="stat-label">Note moy.</span>
+            </div>
+        </section>
+
+        <!-- FORMULAIRE AJOUT -->
+        <section class="add-section">
+            <h2>➕ Ajouter un livre</h2>
+            <form id="addBookForm">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="bookTitle">Titre</label>
+                        <input type="text" id="bookTitle" placeholder="Ex : Le Petit Prince" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="bookAuthor">Auteur</label>
+                        <input type="text" id="bookAuthor" placeholder="Ex : Saint-Exupéry" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="bookGenre">Genre</label>
+                        <select id="bookGenre">
+                            <option value="Roman">📖 Roman</option>
+                            <option value="SF">🚀 Science-Fiction</option>
+                            <option value="Fantasy">🐉 Fantasy</option>
+                            <option value="Thriller">🔪 Thriller</option>
+                            <option value="BD">🎨 BD / Manga</option>
+                            <option value="Essai">📝 Essai</option>
+                            <option value="Poésie">🌸 Poésie</option>
+                            <option value="Histoire">🏛️ Histoire</option>
+                            <option value="Dev perso">🧠 Dév. personnel</option>
+                            <option value="Autre">📦 Autre</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-add">
+                    <span>📥</span> Ajouter à la pile
+                </button>
+            </form>
+        </section>
+
+        <!-- SELECTION ALEATOIRE -->
+        <section class="random-section">
+            <h2>🎲 Quel livre lire ?</h2>
+            <p>Laisse le hasard décider pour toi !</p>
+            <div class="random-filter">
+                <label>Filtrer par genre :</label>
+                <select id="randomGenreFilter">
+                    <option value="all">Tous les genres</option>
+                </select>
+            </div>
+            <button class="btn btn-random" id="randomBtn" onclick="pickRandomBook()">
+                🎰 Choisir un livre au hasard
             </button>
-        </form>
-    </section>
+            <div class="random-result" id="randomResult"></div>
+        </section>
 
-    <!-- SELECTION ALEATOIRE -->
-    <section class="random-section">
-        <h2>🎲 Quel livre lire ?</h2>
-        <p>Laisse le hasard décider pour toi !</p>
-        <div class="random-filter">
-            <label>Filtrer par genre :</label>
-            <select id="randomGenreFilter">
-                <option value="all">Tous les genres</option>
-            </select>
-        </div>
-        <button class="btn btn-random" id="randomBtn" onclick="pickRandomBook()">
-            🎰 Choisir un livre au hasard
-        </button>
-        <div class="random-result" id="randomResult"></div>
-    </section>
+        <!-- FILTRES -->
+        <section class="filter-section">
+            <h2>📋 Ma bibliothèque</h2>
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterBooks('all', this)">📚 Tous</button>
+                <button class="filter-btn" onclick="filterBooks('toRead', this)">📖 À lire</button>
+                <button class="filter-btn" onclick="filterBooks('read', this)">✅ Lus</button>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Rechercher un livre..." oninput="renderBooks()">
+            </div>
+        </section>
 
-    <!-- FILTRES -->
-    <section class="filter-section">
-        <h2>📋 Ma bibliothèque</h2>
-        <div class="filters">
-            <button class="filter-btn active" onclick="filterBooks('all', this)">📚 Tous</button>
-            <button class="filter-btn" onclick="filterBooks('toRead', this)">📖 À lire</button>
-            <button class="filter-btn" onclick="filterBooks('read', this)">✅ Lus</button>
-        </div>
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Rechercher un livre..." oninput="renderBooks()">
-        </div>
-    </section>
+        <!-- LISTE DES LIVRES -->
+        <section class="books-list" id="booksList"></section>
 
-    <!-- LISTE DES LIVRES -->
-    <section class="books-list" id="booksList"></section>
+    </div>
+
+    <!-- ==================== PAGE SETTINGS ==================== -->
+    <div class="page" id="page-settings">
+
+        <header>
+            <div class="logo">⚙️</div>
+            <h1>Paramètres</h1>
+            <p class="subtitle">Personnalise ton expérience</p>
+        </header>
+
+        <!-- THÈMES -->
+        <section class="settings-section">
+            <h2>🎨 Thème de couleurs</h2>
+            <p class="settings-desc">Choisis l'ambiance qui te plaît.</p>
+            <div class="theme-grid">
+                <button class="theme-card" onclick="setTheme('purple')" data-theme-btn="purple">
+                    <div class="theme-preview purple-prev"></div>
+                    <span>💜 Violet</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('blue')" data-theme-btn="blue">
+                    <div class="theme-preview blue-prev"></div>
+                    <span>💙 Bleu</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('green')" data-theme-btn="green">
+                    <div class="theme-preview green-prev"></div>
+                    <span>💚 Vert</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('red')" data-theme-btn="red">
+                    <div class="theme-preview red-prev"></div>
+                    <span>❤️ Rouge</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('orange')" data-theme-btn="orange">
+                    <div class="theme-preview orange-prev"></div>
+                    <span>🧡 Orange</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('pink')" data-theme-btn="pink">
+                    <div class="theme-preview pink-prev"></div>
+                    <span>💗 Rose</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('dark')" data-theme-btn="dark">
+                    <div class="theme-preview dark-prev"></div>
+                    <span>🖤 Noir</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('cyan')" data-theme-btn="cyan">
+                    <div class="theme-preview cyan-prev"></div>
+                    <span>🩵 Cyan</span>
+                </button>
+                <button class="theme-card" onclick="setTheme('gold')" data-theme-btn="gold">
+                    <div class="theme-preview gold-prev"></div>
+                    <span>💛 Or</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- PARTICULES -->
+        <section class="settings-section">
+            <h2>✨ Effets visuels</h2>
+            <div class="setting-row">
+                <div>
+                    <span class="setting-label">Particules d'arrière-plan</span>
+                    <span class="setting-hint">Petites bulles flottantes</span>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="toggleParticles" checked onchange="toggleParticles()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <span class="setting-label">Animations des cartes</span>
+                    <span class="setting-hint">Effets au survol</span>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="toggleAnimations" checked onchange="toggleAnimations()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <!-- DONNÉES -->
+        <section class="settings-section">
+            <h2>💾 Données</h2>
+            <div class="data-actions">
+                <button class="btn btn-export" onclick="exportData()">📤 Exporter (JSON)</button>
+                <button class="btn btn-import" onclick="document.getElementById('importFile').click()">📥 Importer</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Tout supprimer</button>
+            </div>
+        </section>
+
+        <!-- A PROPOS -->
+        <section class="settings-section">
+            <h2>ℹ️ À propos</h2>
+            <div class="about-card">
+                <p><strong>📚 Ma Pile à Livres</strong></p>
+                <p>Version 2.0</p>
+                <p>Fait avec ❤️ en HTML, CSS & JavaScript</p>
+                <p class="about-small">Les données sont sauvegardées localement dans ton navigateur.</p>
+            </div>
+        </section>
+
+    </div>
 
     <!-- MODAL NOTATION -->
     <div class="modal-overlay" id="ratingModal">
@@ -127,7 +239,7 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>📚 Ma Pile à Livres — Fait avec ❤️ en HTML, CSS & JS — 2025</p>
+        <p>📚 Ma Pile à Livres — Fait avec ❤️ — 2025</p>
     </footer>
 
     <script src="script.js"></script>
