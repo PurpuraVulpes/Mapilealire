@@ -338,3 +338,36 @@ footer{text-align:center;padding:30px;color:#666;font-size:.85rem;position:relat
     margin: 6px 0;
     font-style: italic;
 }
+
+/* NOUVEAUX STATUS EXT */
+.book-card.ext-given::before {
+    background: linear-gradient(180deg, #f48fb1, #e91e63) !important;
+}
+.book-card.ext-kept::before {
+    background: linear-gradient(180deg, #ffd54f, #f57c00) !important;
+}
+
+.status-badge.ext-given {
+    background: rgba(244, 143, 177, 0.15);
+    color: #f48fb1;
+}
+.status-badge.ext-kept {
+    background: rgba(255, 213, 79, 0.15);
+    color: #ffd54f;
+}
+
+.btn-given {
+    background: rgba(244, 143, 177, 0.2);
+    color: #f48fb1;
+}
+.btn-given:hover {
+    background: rgba(244, 143, 177, 0.35);
+}
+
+.btn-kept {
+    background: rgba(255, 213, 79, 0.2);
+    color: #ffd54f;
+}
+.btn-kept:hover {
+    background: rgba(255, 213, 79, 0.35);
+}
