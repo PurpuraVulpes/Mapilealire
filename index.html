@@ -222,10 +222,11 @@
                     <div class="input-group">
                         <label for="extSource">Provenance</label>
                         <select id="extSource">
-                            <option value="Bibliothèque">🏛️ Bibliothèque</option>
-                            <option value="Internet">💻 Internet</option>
-                            <option value="École">🎓 École</option>
-                        </select>
+    <option value="Bibliothèque">🏛️ Bibliothèque</option>
+    <option value="Internet">💻 Internet</option>
+    <option value="École">🎓 École</option>
+    <option value="Ma collection">📚 Ma collection</option>
+</select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -241,10 +242,10 @@
                     <div class="input-group">
                         <label for="extStatus">Statut</label>
                         <select id="extStatus">
-                            <option value="read">✅ Déjà lu</option>
-                            <option value="toRead">📥 À lire</option>
-                            <option value="returned">📤 Retiré/Rendu</option>
-                        </select>
+    <option value="returned">📤 Retiré</option>
+    <option value="given">🎁 Rendu</option>
+    <option value="kept">📚 Laissé</option>
+</select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -267,12 +268,12 @@
 
         <section class="filter-section">
             <div class="filters">
-                <button class="filter-btn active" onclick="filterExt('all', this)">📖 Tous</button>
-                <button class="filter-btn" onclick="filterExt('read', this)">✅ Lus</button>
-                <button class="filter-btn" onclick="filterExt('toRead', this)">📥 À lire</button>
-                <button class="filter-btn" onclick="filterExt('returned', this)">📤 Retirés</button>
-                <button class="filter-btn" onclick="filterExt('wantToBuy', this)">🛒 À acheter</button>
-            </div>
+    <button class="filter-btn active" onclick="filterExt('all', this)">📖 Tous</button>
+    <button class="filter-btn" onclick="filterExt('returned', this)">📤 Retirés</button>
+    <button class="filter-btn" onclick="filterExt('given', this)">🎁 Rendus</button>
+    <button class="filter-btn" onclick="filterExt('kept', this)">📚 Laissés</button>
+    <button class="filter-btn" onclick="filterExt('wantToBuy', this)">🛒 À acheter</button>
+</div>
             <div class="sort-bar">
                 <label>Trier :</label>
                 <select id="extSortSelect" onchange="renderExternal()">
@@ -300,12 +301,16 @@
             <p class="subtitle">Générées automatiquement à partir de ta bibliothèque</p>
         </header>
 
-        <section class="stats-bar">
-            <div class="stat"><span class="stat-number" id="sagasTotalStat">0</span><span class="stat-label">Sagas</span></div>
-            <div class="stat"><span class="stat-number" id="sagasCompletedStat">0</span><span class="stat-label">Terminées</span></div>
-            <div class="stat"><span class="stat-number" id="sagasInProgressStat">0</span><span class="stat-label">En cours</span></div>
-            <div class="stat"><span class="stat-number" id="sagasTotalTomes">0</span><span class="stat-label">Tomes</span></div>
-        </section>
+       <section class="stats-bar">
+    <div class="stat"><span class="stat-number" id="extTotal">0</span><span class="stat-label">Total</span></div>
+    <div class="stat"><span class="stat-number" id="extReturned">0</span><span class="stat-label">Retirés</span></div>
+    <div class="stat"><span class="stat-number" id="extGiven">0</span><span class="stat-label">Rendus</span></div>
+    <div class="stat"><span class="stat-number" id="extKept">0</span><span class="stat-label">Laissés</span></div>
+    <div class="stat"><span class="stat-number" id="extToBuy">0</span><span class="stat-label">À acheter</span></div>
+    <div class="stat"><span class="stat-number" id="extAvgRating">-</span><span class="stat-label">Note moy.</span></div>
+    <div class="stat"><span class="stat-number" id="extSagasCount">0</span><span class="stat-label">Sagas ext.</span></div>
+    <div class="stat"><span class="stat-number" id="extTomesCount">0</span><span class="stat-label">Tomes ext.</span></div>
+</section>
 
         <section class="auto-saga-info">
             <div class="info-banner">
@@ -811,10 +816,11 @@
                 <div class="input-group">
                     <label for="editExtSource">Provenance</label>
                     <select id="editExtSource">
-                        <option value="Bibliothèque">🏛️ Bibliothèque</option>
-                        <option value="Internet">💻 Internet</option>
-                        <option value="École">🎓 École</option>
-                    </select>
+    <option value="Bibliothèque">🏛️ Bibliothèque</option>
+    <option value="Internet">💻 Internet</option>
+    <option value="École">🎓 École</option>
+    <option value="Ma collection">📚 Ma collection</option>
+</select>
                 </div>
             </div>
             <div class="form-row">
