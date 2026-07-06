@@ -552,38 +552,60 @@
 
     <!-- MODALES -->
     <div class="modal-overlay" id="ratingModal">
-        <div class="modal">
-            <button class="modal-close" onclick="closeRatingModal()">✕</button>
-            <h2>⭐ Noter ce livre</h2>
-            <p class="modal-book-title" id="modalBookTitle"></p>
-            <div class="stars-input" id="starsInput">
-                <span class="star-btn" onclick="setRating(1)">★</span>
-                <span class="star-btn" onclick="setRating(2)">★</span>
-                <span class="star-btn" onclick="setRating(3)">★</span>
-                <span class="star-btn" onclick="setRating(4)">★</span>
-                <span class="star-btn" onclick="setRating(5)">★</span>
-            </div>
-            <textarea id="bookReview" placeholder="Ton avis (optionnel)..."></textarea>
-            <button class="btn btn-confirm" onclick="confirmRating()">✅ Confirmer</button>
+    <div class="modal">
+        <button class="modal-close" onclick="closeRatingModal()">✕</button>
+        <h2>⭐ Noter ce livre</h2>
+        <p class="modal-book-title" id="modalBookTitle"></p>
+        <div class="stars-input" id="starsInput">
+            <span class="star-btn" onclick="setRating(1)">★</span>
+            <span class="star-btn" onclick="setRating(2)">★</span>
+            <span class="star-btn" onclick="setRating(3)">★</span>
+            <span class="star-btn" onclick="setRating(4)">★</span>
+            <span class="star-btn" onclick="setRating(5)">★</span>
         </div>
+        <div class="form-row date-row">
+            <div class="input-group">
+                <label for="bookDateStart">📅 Début de lecture</label>
+                <input type="date" id="bookDateStart" onchange="calcReadingDays('book')">
+            </div>
+            <div class="input-group">
+                <label for="bookDateEnd">🏁 Fin de lecture</label>
+                <input type="date" id="bookDateEnd" onchange="calcReadingDays('book')">
+            </div>
+        </div>
+        <p class="reading-days" id="bookReadingDays"></p>
+        <textarea id="bookReview" placeholder="Ton avis (optionnel)..."></textarea>
+        <button class="btn btn-confirm" onclick="confirmRating()">✅ Confirmer</button>
     </div>
+</div>
 
-    <div class="modal-overlay" id="ratingExtModal">
-        <div class="modal">
-            <button class="modal-close" onclick="closeRatingExtModal()">✕</button>
-            <h2>⭐ Noter ce livre</h2>
-            <p class="modal-book-title" id="modalExtBookTitle"></p>
-            <div class="stars-input" id="starsExtInput">
-                <span class="star-btn" onclick="setExtRating(1)">★</span>
-                <span class="star-btn" onclick="setExtRating(2)">★</span>
-                <span class="star-btn" onclick="setExtRating(3)">★</span>
-                <span class="star-btn" onclick="setExtRating(4)">★</span>
-                <span class="star-btn" onclick="setExtRating(5)">★</span>
-            </div>
-            <textarea id="extBookReview" placeholder="Ton avis (optionnel)..."></textarea>
-            <button class="btn btn-confirm" onclick="confirmExtRating()">✅ Confirmer</button>
+<div class="modal-overlay" id="ratingExtModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeRatingExtModal()">✕</button>
+        <h2>⭐ Noter ce livre</h2>
+        <p class="modal-book-title" id="modalExtBookTitle"></p>
+        <div class="stars-input" id="starsExtInput">
+            <span class="star-btn" onclick="setExtRating(1)">★</span>
+            <span class="star-btn" onclick="setExtRating(2)">★</span>
+            <span class="star-btn" onclick="setExtRating(3)">★</span>
+            <span class="star-btn" onclick="setExtRating(4)">★</span>
+            <span class="star-btn" onclick="setExtRating(5)">★</span>
         </div>
+        <div class="form-row date-row">
+            <div class="input-group">
+                <label for="extDateStart">📅 Début de lecture</label>
+                <input type="date" id="extDateStart" onchange="calcReadingDays('ext')">
+            </div>
+            <div class="input-group">
+                <label for="extDateEnd">🏁 Fin de lecture</label>
+                <input type="date" id="extDateEnd" onchange="calcReadingDays('ext')">
+            </div>
+        </div>
+        <p class="reading-days" id="extReadingDays"></p>
+        <textarea id="extBookReview" placeholder="Ton avis (optionnel)..."></textarea>
+        <button class="btn btn-confirm" onclick="confirmExtRating()">✅ Confirmer</button>
     </div>
+</div>
 
     <div class="modal-overlay" id="transferModal">
         <div class="modal">
