@@ -15,13 +15,13 @@
     <!-- NAV -->
     <nav class="main-nav">
         <button class="nav-btn active" onclick="switchTab('home', this)">📚 Bibliothèque</button>
+        <button class="nav-btn" onclick="switchTab('wishlist', this)">🛒 À acheter</button>
         <button class="nav-btn" onclick="switchTab('settings', this)">⚙️ Paramètres</button>
     </nav>
 
     <!-- ==================== PAGE HOME ==================== -->
     <div class="page active" id="page-home">
 
-        <!-- HEADER -->
         <header>
             <div class="logo">📚</div>
             <h1>Ma Pile à Livres</h1>
@@ -45,6 +45,10 @@
             <div class="stat">
                 <span class="stat-number" id="avgRating">-</span>
                 <span class="stat-label">Note moy.</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="wishlistCount">0</span>
+                <span class="stat-label">À acheter</span>
             </div>
         </section>
 
@@ -117,6 +121,107 @@
 
     </div>
 
+    <!-- ==================== PAGE WISHLIST ==================== -->
+    <div class="page" id="page-wishlist">
+
+        <header>
+            <div class="logo">🛒</div>
+            <h1>Ma Liste d'Achats</h1>
+            <p class="subtitle">Les livres que tu veux acquérir</p>
+        </header>
+
+        <!-- STATS WISHLIST -->
+        <section class="stats-bar">
+            <div class="stat">
+                <span class="stat-number" id="wishlistTotal">0</span>
+                <span class="stat-label">À acheter</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="wishlistBought">0</span>
+                <span class="stat-label">Achetés</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="wishlistBudget">0 €</span>
+                <span class="stat-label">Budget total</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="wishlistSpent">0 €</span>
+                <span class="stat-label">Dépensé</span>
+            </div>
+        </section>
+
+        <!-- FORMULAIRE WISHLIST -->
+        <section class="add-section">
+            <h2>➕ Ajouter à la liste d'achats</h2>
+            <form id="addWishlistForm">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="wishTitle">Titre</label>
+                        <input type="text" id="wishTitle" placeholder="Ex : Dune" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="wishAuthor">Auteur</label>
+                        <input type="text" id="wishAuthor" placeholder="Ex : Frank Herbert" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="wishGenre">Genre</label>
+                        <select id="wishGenre">
+                            <option value="Roman">📖 Roman</option>
+                            <option value="SF">🚀 Science-Fiction</option>
+                            <option value="Fantasy">🐉 Fantasy</option>
+                            <option value="Thriller">🔪 Thriller</option>
+                            <option value="BD">🎨 BD / Manga</option>
+                            <option value="Essai">📝 Essai</option>
+                            <option value="Poésie">🌸 Poésie</option>
+                            <option value="Histoire">🏛️ Histoire</option>
+                            <option value="Dev perso">🧠 Dév. personnel</option>
+                            <option value="Autre">📦 Autre</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="wishPrice">Prix estimé (€)</label>
+                        <input type="number" id="wishPrice" placeholder="Ex : 15" min="0" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="wishPriority">Priorité</label>
+                        <select id="wishPriority">
+                            <option value="3">🔴 Haute</option>
+                            <option value="2" selected>🟡 Moyenne</option>
+                            <option value="1">🟢 Basse</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group" style="flex: 1 1 100%;">
+                        <label for="wishNotes">Notes / Lien (optionnel)</label>
+                        <input type="text" id="wishNotes" placeholder="Ex : Vu en librairie, lien Amazon...">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-add-wish">
+                    <span>🛒</span> Ajouter à la liste
+                </button>
+            </form>
+        </section>
+
+        <!-- FILTRES WISHLIST -->
+        <section class="filter-section">
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterWishlist('all', this)">🛒 Tous</button>
+                <button class="filter-btn" onclick="filterWishlist('toBuy', this)">📋 À acheter</button>
+                <button class="filter-btn" onclick="filterWishlist('bought', this)">✅ Achetés</button>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="wishSearchInput" placeholder="🔍 Rechercher dans la wishlist..." oninput="renderWishlist()">
+            </div>
+        </section>
+
+        <!-- LISTE WISHLIST -->
+        <section class="books-list" id="wishlistList"></section>
+
+    </div>
+
     <!-- ==================== PAGE SETTINGS ==================== -->
     <div class="page" id="page-settings">
 
@@ -170,7 +275,7 @@
             </div>
         </section>
 
-        <!-- PARTICULES -->
+        <!-- EFFETS -->
         <section class="settings-section">
             <h2>✨ Effets visuels</h2>
             <div class="setting-row">
@@ -211,7 +316,7 @@
             <h2>ℹ️ À propos</h2>
             <div class="about-card">
                 <p><strong>📚 Ma Pile à Livres</strong></p>
-                <p>Version 2.0</p>
+                <p>Version 3.0</p>
                 <p>Fait avec ❤️ en HTML, CSS & JavaScript</p>
                 <p class="about-small">Les données sont sauvegardées localement dans ton navigateur.</p>
             </div>
@@ -237,7 +342,23 @@
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- MODAL TRANSFERT -->
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeTransferModal()">✕</button>
+            <h2>📚 Transférer à la bibliothèque</h2>
+            <p class="modal-book-title" id="transferBookTitle"></p>
+            <p class="transfer-desc">Ce livre sera ajouté à ta pile de lecture avec le statut "À lire".</p>
+            <div class="transfer-options">
+                <label class="transfer-option">
+                    <input type="checkbox" id="removeFromWishlist" checked>
+                    <span>Retirer de la liste d'achats</span>
+                </label>
+            </div>
+            <button class="btn btn-confirm" onclick="confirmTransfer()">📚 Transférer</button>
+        </div>
+    </div>
+
     <footer>
         <p>📚 Ma Pile à Livres — Fait avec ❤️ — 2025</p>
     </footer>
