@@ -5,8 +5,10 @@ let books = JSON.parse(localStorage.getItem('myBookPile')) || [];
 let wishlist = JSON.parse(localStorage.getItem('myBookWishlist')) || [];
 let sagasMeta = JSON.parse(localStorage.getItem('myBookSagasMeta')) || {};
 let settings = JSON.parse(localStorage.getItem('myBookPileSettings')) || {
-    theme: 'purple', particles: true, animations: true
+    theme: 'purple', particles: true, animations: true, font: 'Poppins'
 };
+// Migration : ajouter la font si elle n'existe pas
+if (!settings.font) settings.font = 'Poppins';
 
 
 let currentFilter = 'all';
@@ -53,6 +55,11 @@ function saveSettings() { localStorage.setItem('myBookPileSettings', JSON.string
 function applySettings() {
     document.documentElement.setAttribute('data-theme', settings.theme);
     updateActiveThemeCard();
+    
+    // Appliquer la police
+    document.documentElement.style.setProperty('--main-font', settings.font || 'Poppins');
+    updateActiveFontCard();
+    
     const tp = document.getElementById('toggleParticles');
     const ta = document.getElementById('toggleAnimations');
     if (tp) tp.checked = settings.particles;
@@ -83,6 +90,20 @@ function setTheme(t) {
 function updateActiveThemeCard() {
     document.querySelectorAll('.theme-card').forEach(c => {
         c.classList.toggle('active', c.getAttribute('data-theme-btn') === settings.theme);
+    });
+}
+
+function setFont(fontName) {
+    settings.font = fontName;
+    document.documentElement.style.setProperty('--main-font', fontName);
+    updateActiveFontCard();
+    saveSettings();
+    showToast(`🔤 Police "${fontName}" appliquée !`);
+}
+
+function updateActiveFontCard() {
+    document.querySelectorAll('.font-card').forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-font-btn') === settings.font);
     });
 }
 
