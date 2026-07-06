@@ -339,6 +339,114 @@ function renderSagas() {
     const allSeries = getAllSeries();
 
     let seriesList = Object.values(allSeries);
+    seriesList = seriesList.filter(s => s.name.toLowerCase().includes(query) || s.author.toLowerCase().includes(query));
+
+    if (sagaFilter === 'completed') seriesList = seriesList.filter(s => s.isCompleted);
+    else if (sagaFilter === 'inProgress') seriesList = seriesList.filter(s => s.isStarted && !s.isCompleted);
+    else if (sagaFilter === 'notStarted') seriesList = seriesList.filter(s => !s.isStarted);
+
+    const allSeriesValues = Object.values(allSeries);
+    document.getElementById('sagasTotalStat').textContent = allSeriesValues.length;
+    document.getElementById('sagasCompletedStat').textContent = allSeriesValues.filter(s => s.isCompleted).length;
+    document.getElementById('sagasInProgressStat').textContent = allSeriesValues.filter(s => s.isStarted && !s.isCompleted).length;
+    document.getElementById('sagasTotalTomes').textContent = allSeriesValues.reduce((sum, s) => sum + s.ownedCount, 0);
+    document.getElementById('sagasCount').textContent = allSeriesValues.length;
+
+    if (!seriesList.length) {
+        container.innerHTML = `<div class="empty-state"><span class="emoji">📖</span><p>Aucune saga trouvée.<br>Ajoute des livres avec un nom de série !</p></div>`;
+        return;
+    }
+
+    seriesList.sort((a, b) => {
+        if (a.isCompleted && !b.isCompleted) return 1;
+        if (!a.isCompleted && b.isCompleted) return -1;
+        return b.progress - a.progress;
+    });
+
+    container.innerHTML = seriesList.map(s => {
+        // Liste des tomes possédés
+        const tomesHtml = s.books.map(b => `
+            <div class="tome-item">
+                <span class="tome-title">${b.tome ? 'T' + b.tome + ' — ' : ''}${b.title}</span>
+                ${b.rating > 0 ? `<span class="tome-rating">${'★'.repeat(b.rating)}</span>` : ''}
+                <span class="tome-status ${b.status === 'read' ? 'read-tome' : 'unread-tome'}">${b.status === 'read' ? '✅' : '📖'}</span>
+            </div>`).join('');
+
+        // Calculer les tomes manquants
+        const ownedTomeNumbers = s.books.map(b => b.tome).filter(t => t !== null && t !== undefined);
+        const missingTomes = [];
+        
+        if (s.totalTomes > 0) {
+            for (let i = 1; i <= s.totalTomes; i++) {
+                if (!ownedTomeNumbers.includes(i)) {
+                    missingTomes.push(i);
+                }
+            }
+        }
+
+        const missingCount = s.totalTomes - s.ownedCount;
+
+        // HTML des tomes manquants
+        let missingHtml = '';
+        if (missingTomes.length > 0) {
+            const missingItems = missingTomes.map(t => `
+                <div class="tome-item missing-tome">
+                    <span class="tome-title missing-title">T${t} — ???</span>
+                    <span class="tome-status missing-status">❌ Manquant</span>
+                </div>`).join('');
+
+            missingHtml = `
+                <div class="missing-section">
+                    <div class="missing-header">
+                        <span class="missing-icon">⚠️</span>
+                        <span class="missing-label">${missingTomes.length} tome${missingTomes.length > 1 ? 's' : ''} manquant${missingTomes.length > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="missing-list">
+                        ${missingItems}
+                    </div>
+                    <p class="missing-hint">💡 Ajoute ces tomes via la bibliothèque avec la série "${s.name}"</p>
+                </div>`;
+        }
+
+        // Icône de complétion
+        let completionIcon = '';
+        if (s.isCompleted) {
+            completionIcon = '<span class="saga-complete-badge">🎉 Saga terminée !</span>';
+        } else if (missingTomes.length === 0 && s.ownedCount >= s.totalTomes) {
+            completionIcon = '<span class="saga-all-owned-badge">📚 Tous les tomes possédés</span>';
+        }
+
+        // Note moyenne
+        const avgRating = s.books.filter(b => b.rating > 0);
+        const avg = avgRating.length > 0 ? (avgRating.reduce((sum, b) => sum + b.rating, 0) / avgRating.length).toFixed(1) : null;
+
+        return `<div class="saga-card ${s.isCompleted ? 'saga-completed' : ''} ${missingTomes.length > 0 ? 'saga-has-missing' : ''}">
+            <h3>📖 ${s.name}</h3>
+            <p class="saga-author">par ${s.author}</p>
+            <span class="genre-tag">${s.genre}</span>
+            ${completionIcon}
+            <div class="saga-info">
+                <span>📚 ${s.ownedCount}/${s.totalTomes} possédés</span>
+                <span>✅ ${s.readCount} lus</span>
+                ${missingCount > 0 ? `<span class="missing-count-tag">❌ ${missingCount} manquants</span>` : ''}
+                ${avg ? `<span>⭐ ${avg}/5</span>` : ''}
+            </div>
+            <p class="progress-text">${s.progress}% lu ${s.isCompleted ? '🎉' : ''}</p>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(s.progress, 100)}%"></div></div>
+            
+            <div class="tomes-list">
+                <p class="tomes-section-title">📗 Tomes possédés (${s.ownedCount})</p>
+                ${tomesHtml}
+            </div>
+
+            ${missingHtml}
+
+            <div class="actions">
+                <button class="btn-edit-saga" onclick="openEditSagaModal('${s.key}')">✏️ Modifier tomes prévus</button>
+            </div>
+        </div>`;
+    }).join('');
+}
 
     // Recherche
     seriesList = seriesList.filter(s => s.name.toLowerCase().includes(query) || s.author.toLowerCase().includes(query));
