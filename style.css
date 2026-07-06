@@ -233,3 +233,114 @@ footer{text-align:center;padding:30px;color:#666;font-size:.85rem;position:relat
     .main-nav{gap:3px;padding:8px 5px}.nav-btn{padding:7px 10px;font-size:.72rem}.sort-bar{flex-direction:column;align-items:flex-start}
     .auto-saga-info{padding:0 15px}.info-banner{flex-direction:column;text-align:center}
 }
+
+/* ============================================================
+   TOMES MANQUANTS - SAGAS
+   ============================================================ */
+.missing-section {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(239, 83, 80, 0.08);
+    border: 1px solid rgba(239, 83, 80, 0.2);
+    border-radius: 12px;
+}
+
+.missing-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.missing-icon {
+    font-size: 1.2rem;
+}
+
+.missing-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ef5350;
+}
+
+.missing-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.missing-tome {
+    border-left: 3px solid rgba(239, 83, 80, 0.4) !important;
+    background: rgba(239, 83, 80, 0.05) !important;
+}
+
+.missing-title {
+    color: #999 !important;
+    font-style: italic;
+}
+
+.missing-status {
+    background: rgba(239, 83, 80, 0.15) !important;
+    color: #ef5350 !important;
+    font-size: 0.73rem !important;
+    padding: 2px 8px !important;
+    border-radius: 10px !important;
+}
+
+.missing-hint {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 10px;
+    font-style: italic;
+    text-align: center;
+}
+
+.missing-count-tag {
+    color: #ef5350 !important;
+    font-weight: 600;
+}
+
+/* Badges de complétion */
+.saga-complete-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(67, 233, 123, 0.15);
+    color: var(--success-1);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+.saga-all-owned-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(167, 139, 250, 0.15);
+    color: var(--saga-1);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+/* Bordure spéciale pour sagas avec tomes manquants */
+.saga-has-missing {
+    border-color: rgba(239, 83, 80, 0.2) !important;
+}
+
+/* Bordure spéciale pour sagas terminées */
+.saga-completed {
+    border-color: rgba(67, 233, 123, 0.2) !important;
+}
+
+.saga-completed::before {
+    background: linear-gradient(180deg, var(--success-1), var(--success-2)) !important;
+}
+
+/* Section titles dans les sagas */
+.tomes-section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
