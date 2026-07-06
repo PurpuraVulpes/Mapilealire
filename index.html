@@ -164,9 +164,10 @@
 
         <section class="stats-bar">
             <div class="stat"><span class="stat-number" id="extTotal">0</span><span class="stat-label">Total</span></div>
-            <div class="stat"><span class="stat-number" id="extRead">0</span><span class="stat-label">Lus</span></div>
-            <div class="stat"><span class="stat-number" id="extReturned">0</span><span class="stat-label">Retirés</span></div>
-            <div class="stat"><span class="stat-number" id="extToBuy">0</span><span class="stat-label">À acheter</span></div>
+            <div class="stat"><span class="stat-number" id="extReturned">0</span><span class="stat-label">📤 Retirés</span></div>
+            <div class="stat"><span class="stat-number" id="extGiven">0</span><span class="stat-label">🎁 Rendus</span></div>
+            <div class="stat"><span class="stat-number" id="extKept">0</span><span class="stat-label">📚 Laissés</span></div>
+            <div class="stat"><span class="stat-number" id="extToBuy">0</span><span class="stat-label">🛒 À acheter</span></div>
             <div class="stat"><span class="stat-number" id="extAvgRating">-</span><span class="stat-label">Note moy.</span></div>
             <div class="stat"><span class="stat-number" id="extSagasCount">0</span><span class="stat-label">Sagas ext.</span></div>
             <div class="stat"><span class="stat-number" id="extTomesCount">0</span><span class="stat-label">Tomes ext.</span></div>
@@ -222,11 +223,11 @@
                     <div class="input-group">
                         <label for="extSource">Provenance</label>
                         <select id="extSource">
-    <option value="Bibliothèque">🏛️ Bibliothèque</option>
-    <option value="Internet">💻 Internet</option>
-    <option value="École">🎓 École</option>
-    <option value="Ma collection">📚 Ma collection</option>
-</select>
+                            <option value="Bibliothèque">🏛️ Bibliothèque</option>
+                            <option value="Internet">💻 Internet</option>
+                            <option value="École">🎓 École</option>
+                            <option value="Ma collection">📚 Ma collection</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -242,10 +243,10 @@
                     <div class="input-group">
                         <label for="extStatus">Statut</label>
                         <select id="extStatus">
-    <option value="returned">📤 Retiré</option>
-    <option value="given">🎁 Rendu</option>
-    <option value="kept">📚 Laissé</option>
-</select>
+                            <option value="returned">📤 Retiré</option>
+                            <option value="given">🎁 Rendu</option>
+                            <option value="kept">📚 Laissé</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -268,12 +269,12 @@
 
         <section class="filter-section">
             <div class="filters">
-    <button class="filter-btn active" onclick="filterExt('all', this)">📖 Tous</button>
-    <button class="filter-btn" onclick="filterExt('returned', this)">📤 Retirés</button>
-    <button class="filter-btn" onclick="filterExt('given', this)">🎁 Rendus</button>
-    <button class="filter-btn" onclick="filterExt('kept', this)">📚 Laissés</button>
-    <button class="filter-btn" onclick="filterExt('wantToBuy', this)">🛒 À acheter</button>
-</div>
+                <button class="filter-btn active" onclick="filterExt('all', this)">📖 Tous</button>
+                <button class="filter-btn" onclick="filterExt('returned', this)">📤 Retirés</button>
+                <button class="filter-btn" onclick="filterExt('given', this)">🎁 Rendus</button>
+                <button class="filter-btn" onclick="filterExt('kept', this)">📚 Laissés</button>
+                <button class="filter-btn" onclick="filterExt('wantToBuy', this)">🛒 À acheter</button>
+            </div>
             <div class="sort-bar">
                 <label>Trier :</label>
                 <select id="extSortSelect" onchange="renderExternal()">
@@ -301,16 +302,12 @@
             <p class="subtitle">Générées automatiquement à partir de ta bibliothèque</p>
         </header>
 
-       <section class="stats-bar">
-    <div class="stat"><span class="stat-number" id="extTotal">0</span><span class="stat-label">Total</span></div>
-    <div class="stat"><span class="stat-number" id="extReturned">0</span><span class="stat-label">Retirés</span></div>
-    <div class="stat"><span class="stat-number" id="extGiven">0</span><span class="stat-label">Rendus</span></div>
-    <div class="stat"><span class="stat-number" id="extKept">0</span><span class="stat-label">Laissés</span></div>
-    <div class="stat"><span class="stat-number" id="extToBuy">0</span><span class="stat-label">À acheter</span></div>
-    <div class="stat"><span class="stat-number" id="extAvgRating">-</span><span class="stat-label">Note moy.</span></div>
-    <div class="stat"><span class="stat-number" id="extSagasCount">0</span><span class="stat-label">Sagas ext.</span></div>
-    <div class="stat"><span class="stat-number" id="extTomesCount">0</span><span class="stat-label">Tomes ext.</span></div>
-</section>
+        <section class="stats-bar">
+            <div class="stat"><span class="stat-number" id="sagasTotalStat">0</span><span class="stat-label">📚 Sagas totales</span></div>
+            <div class="stat"><span class="stat-number" id="sagasCompletedStat">0</span><span class="stat-label">✅ Terminées</span></div>
+            <div class="stat"><span class="stat-number" id="sagasInProgressStat">0</span><span class="stat-label">🔄 En cours</span></div>
+            <div class="stat"><span class="stat-number" id="sagasTotalTomes">0</span><span class="stat-label">📖 Tomes possédés</span></div>
+        </section>
 
         <section class="auto-saga-info">
             <div class="info-banner">
@@ -557,60 +554,60 @@
 
     <!-- MODALES -->
     <div class="modal-overlay" id="ratingModal">
-    <div class="modal">
-        <button class="modal-close" onclick="closeRatingModal()">✕</button>
-        <h2>⭐ Noter ce livre</h2>
-        <p class="modal-book-title" id="modalBookTitle"></p>
-        <div class="stars-input" id="starsInput">
-            <span class="star-btn" onclick="setRating(1)">★</span>
-            <span class="star-btn" onclick="setRating(2)">★</span>
-            <span class="star-btn" onclick="setRating(3)">★</span>
-            <span class="star-btn" onclick="setRating(4)">★</span>
-            <span class="star-btn" onclick="setRating(5)">★</span>
-        </div>
-        <div class="form-row date-row">
-            <div class="input-group">
-                <label for="bookDateStart">📅 Début de lecture</label>
-                <input type="date" id="bookDateStart" onchange="calcReadingDays('book')">
+        <div class="modal">
+            <button class="modal-close" onclick="closeRatingModal()">✕</button>
+            <h2>⭐ Noter ce livre</h2>
+            <p class="modal-book-title" id="modalBookTitle"></p>
+            <div class="stars-input" id="starsInput">
+                <span class="star-btn" onclick="setRating(1)">★</span>
+                <span class="star-btn" onclick="setRating(2)">★</span>
+                <span class="star-btn" onclick="setRating(3)">★</span>
+                <span class="star-btn" onclick="setRating(4)">★</span>
+                <span class="star-btn" onclick="setRating(5)">★</span>
             </div>
-            <div class="input-group">
-                <label for="bookDateEnd">🏁 Fin de lecture</label>
-                <input type="date" id="bookDateEnd" onchange="calcReadingDays('book')">
+            <div class="form-row date-row">
+                <div class="input-group">
+                    <label for="bookDateStart">📅 Début de lecture</label>
+                    <input type="date" id="bookDateStart" onchange="calcReadingDays('book')">
+                </div>
+                <div class="input-group">
+                    <label for="bookDateEnd">🏁 Fin de lecture</label>
+                    <input type="date" id="bookDateEnd" onchange="calcReadingDays('book')">
+                </div>
             </div>
+            <p class="reading-days" id="bookReadingDays"></p>
+            <textarea id="bookReview" placeholder="Ton avis (optionnel)..."></textarea>
+            <button class="btn btn-confirm" onclick="confirmRating()">✅ Confirmer</button>
         </div>
-        <p class="reading-days" id="bookReadingDays"></p>
-        <textarea id="bookReview" placeholder="Ton avis (optionnel)..."></textarea>
-        <button class="btn btn-confirm" onclick="confirmRating()">✅ Confirmer</button>
     </div>
-</div>
 
-<div class="modal-overlay" id="ratingExtModal">
-    <div class="modal">
-        <button class="modal-close" onclick="closeRatingExtModal()">✕</button>
-        <h2>⭐ Noter ce livre</h2>
-        <p class="modal-book-title" id="modalExtBookTitle"></p>
-        <div class="stars-input" id="starsExtInput">
-            <span class="star-btn" onclick="setExtRating(1)">★</span>
-            <span class="star-btn" onclick="setExtRating(2)">★</span>
-            <span class="star-btn" onclick="setExtRating(3)">★</span>
-            <span class="star-btn" onclick="setExtRating(4)">★</span>
-            <span class="star-btn" onclick="setExtRating(5)">★</span>
-        </div>
-        <div class="form-row date-row">
-            <div class="input-group">
-                <label for="extDateStart">📅 Début de lecture</label>
-                <input type="date" id="extDateStart" onchange="calcReadingDays('ext')">
+    <div class="modal-overlay" id="ratingExtModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeRatingExtModal()">✕</button>
+            <h2>⭐ Noter ce livre</h2>
+            <p class="modal-book-title" id="modalExtBookTitle"></p>
+            <div class="stars-input" id="starsExtInput">
+                <span class="star-btn" onclick="setExtRating(1)">★</span>
+                <span class="star-btn" onclick="setExtRating(2)">★</span>
+                <span class="star-btn" onclick="setExtRating(3)">★</span>
+                <span class="star-btn" onclick="setExtRating(4)">★</span>
+                <span class="star-btn" onclick="setExtRating(5)">★</span>
             </div>
-            <div class="input-group">
-                <label for="extDateEnd">🏁 Fin de lecture</label>
-                <input type="date" id="extDateEnd" onchange="calcReadingDays('ext')">
+            <div class="form-row date-row">
+                <div class="input-group">
+                    <label for="extDateStart">📅 Début de lecture</label>
+                    <input type="date" id="extDateStart" onchange="calcReadingDays('ext')">
+                </div>
+                <div class="input-group">
+                    <label for="extDateEnd">🏁 Fin de lecture</label>
+                    <input type="date" id="extDateEnd" onchange="calcReadingDays('ext')">
+                </div>
             </div>
+            <p class="reading-days" id="extReadingDays"></p>
+            <textarea id="extBookReview" placeholder="Ton avis (optionnel)..."></textarea>
+            <button class="btn btn-confirm" onclick="confirmExtRating()">✅ Confirmer</button>
         </div>
-        <p class="reading-days" id="extReadingDays"></p>
-        <textarea id="extBookReview" placeholder="Ton avis (optionnel)..."></textarea>
-        <button class="btn btn-confirm" onclick="confirmExtRating()">✅ Confirmer</button>
     </div>
-</div>
 
     <div class="modal-overlay" id="transferModal">
         <div class="modal">
@@ -816,11 +813,11 @@
                 <div class="input-group">
                     <label for="editExtSource">Provenance</label>
                     <select id="editExtSource">
-    <option value="Bibliothèque">🏛️ Bibliothèque</option>
-    <option value="Internet">💻 Internet</option>
-    <option value="École">🎓 École</option>
-    <option value="Ma collection">📚 Ma collection</option>
-</select>
+                        <option value="Bibliothèque">🏛️ Bibliothèque</option>
+                        <option value="Internet">💻 Internet</option>
+                        <option value="École">🎓 École</option>
+                        <option value="Ma collection">📚 Ma collection</option>
+                    </select>
                 </div>
             </div>
             <div class="form-row">
