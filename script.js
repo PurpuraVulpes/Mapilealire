@@ -157,6 +157,60 @@ function clearAllData() {
     }
 }
 
+// ============================================================
+//  CALCUL DES JOURS DE LECTURE
+// ============================================================
+function calcReadingDays(type) {
+    var startEl = document.getElementById(type === 'ext' ? 'extDateStart' : 'bookDateStart');
+    var endEl = document.getElementById(type === 'ext' ? 'extDateEnd' : 'bookDateEnd');
+    var displayEl = document.getElementById(type === 'ext' ? 'extReadingDays' : 'bookReadingDays');
+
+    if (!startEl.value || !endEl.value) {
+        displayEl.classList.remove('active');
+        return;
+    }
+
+    var start = new Date(startEl.value);
+    var end = new Date(endEl.value);
+    var diff = end - start;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    displayEl.classList.add('active');
+
+    if (days < 0) {
+        displayEl.textContent = '⚠️ La date de fin doit être après le début !';
+        displayEl.classList.add('warning');
+    } else if (days === 0) {
+        displayEl.textContent = '⚡ Lu en 1 jour !';
+        displayEl.classList.remove('warning');
+    } else if (days === 1) {
+        displayEl.textContent = '📖 Lu en 2 jours';
+        displayEl.classList.remove('warning');
+    } else {
+        displayEl.textContent = '📖 Lu en ' + (days + 1) + ' jours';
+        displayEl.classList.remove('warning');
+    }
+}
+
+function getReadingDaysText(startDate, endDate) {
+    if (!startDate || !endDate) return null;
+    var start = new Date(startDate);
+    var end = new Date(endDate);
+    var diff = end - start;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days < 0) return null;
+    return days + 1;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    var day = String(d.getDate()).padStart(2, '0');
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var year = d.getFullYear();
+    return day + '/' + month + '/' + year;
+}
+
 function createParticles() {
     var c = document.getElementById('particles');
     if (!c) return;
@@ -344,6 +398,14 @@ function renderBooks() {
         var bk = filtered[j];
         var starsH = bk.rating > 0 ? '<div class="stars">' + '★'.repeat(bk.rating) + '☆'.repeat(5 - bk.rating) + '</div>' : '';
         var reviewH = bk.review ? '<div class="review">"' + bk.review + '"</div>' : '';
+        var readDays = getReadingDaysText(bk.dateStart, bk.dateEnd);
+var readingH = '';
+if (bk.status === 'read' && readDays) {
+    readingH = '<span class="reading-info">📖 Lu en ' + readDays + ' jour' + (readDays > 1 ? 's' : '') + '</span>';
+    if (bk.dateStart && bk.dateEnd) {
+        readingH += '<p class="reading-dates">📅 Du ' + formatDate(bk.dateStart) + ' au ' + formatDate(bk.dateEnd) + '</p>';
+    }
+}
         var sc = bk.status === 'read' ? 'read' : 'to-read';
         var sl = bk.status === 'read' ? '✅ Lu' : '📖 À lire';
         var sagaH = bk.series ? '<span class="saga-tag">📖 ' + bk.series + '</span>' : '';
@@ -355,7 +417,7 @@ function renderBooks() {
             '<h3>' + bk.title + '</h3><p class="author">par ' + bk.author + '</p>' +
             '<span class="genre-tag">' + (bk.genre || 'Roman') + '</span>' +
             '<span class="status-badge ' + sc + '">' + sl + '</span>' +
-            formatH + tomeH + sagaH + starsH + reviewH +
+            formatH + tomeH + sagaH + readingH + starsH + reviewH +
             '<div class="actions">' +
             (bk.status === 'toRead' ? '<button class="btn-mark-read" onclick="markAsRead(' + bk.id + ')">✅ Lu</button>' : '<button class="btn-unread" onclick="markAsUnread(' + bk.id + ')">📖 À lire</button>') +
             (bk.status === 'read' ? '<button class="btn-rate" onclick="openRatingModal(' + bk.id + ')">⭐ ' + (bk.rating > 0 ? 'Modifier note' : 'Noter') + '</button>' : '') +
@@ -420,8 +482,11 @@ function openRatingModal(id) {
     if (!b) return;
     document.getElementById('modalBookTitle').textContent = b.title;
     document.getElementById('bookReview').value = b.review || '';
+    document.getElementById('bookDateStart').value = b.dateStart || '';
+    document.getElementById('bookDateEnd').value = b.dateEnd || '';
     if (b.rating > 0) selectedRating = b.rating;
     updateStarsDisplay();
+    calcReadingDays('book');
     document.getElementById('ratingModal').classList.add('active');
 }
 
@@ -431,12 +496,15 @@ function updateStarsDisplay() {
     var stars = document.querySelectorAll('#starsInput .star-btn');
     for (var i = 0; i < stars.length; i++) stars[i].classList.toggle('active', i < selectedRating);
 }
+
 function confirmRating() {
     if (!selectedRating) { showToast('⚠️ Sélectionne au moins 1 étoile !'); return; }
     for (var i = 0; i < books.length; i++) {
         if (books[i].id === ratingBookId) {
             books[i].rating = selectedRating;
             books[i].review = document.getElementById('bookReview').value.trim();
+            books[i].dateStart = document.getElementById('bookDateStart').value || null;
+            books[i].dateEnd = document.getElementById('bookDateEnd').value || null;
             saveBooks(); renderAll();
             showToast('⭐ Noté ' + selectedRating + '/5 !');
             break;
@@ -602,6 +670,14 @@ function renderExternal() {
         var it = filtered[j];
         var starsH = it.rating > 0 ? '<div class="stars">' + '★'.repeat(it.rating) + '☆'.repeat(5 - it.rating) + '</div>' : '';
         var reviewH = it.review ? '<div class="review">"' + it.review + '"</div>' : '';
+        var readDays = getReadingDaysText(it.dateStart, it.dateEnd);
+var readingH = '';
+if (it.status === 'read' && readDays) {
+    readingH = '<span class="reading-info">📖 Lu en ' + readDays + ' jour' + (readDays > 1 ? 's' : '') + '</span>';
+    if (it.dateStart && it.dateEnd) {
+        readingH += '<p class="reading-dates">📅 Du ' + formatDate(it.dateStart) + ' au ' + formatDate(it.dateEnd) + '</p>';
+    }
+}
         var sourceIcon = SOURCE_ICONS[it.source] || '📚';
         var sourceH = it.source ? '<span class="source-tag">' + sourceIcon + ' ' + it.source + '</span>' : '';
         var seriesH = it.series ? '<span class="saga-tag">📖 ' + it.series + '</span>' : '';
@@ -616,7 +692,7 @@ function renderExternal() {
             '<span class="genre-tag">' + it.genre + '</span>' +
             '<span class="status-badge ' + sc + '">' + (statusLabels[it.status] || '📖') + '</span>' +
             sourceH + tomeH + seriesH + wantH +
-            '</div>' + starsH + reviewH +
+            '</div>' + readingH + starsH + reviewH +
             (it.notes ? '<p class="wish-notes">📝 ' + it.notes + '</p>' : '') +
             '<div class="actions">' +
             (it.status === 'toRead' ? '<button class="btn-mark-read" onclick="markExtAsRead(' + it.id + ')">✅ Lu</button>' : '') +
@@ -729,8 +805,11 @@ function openRatingExtModal(id) {
     if (!b) return;
     document.getElementById('modalExtBookTitle').textContent = b.title;
     document.getElementById('extBookReview').value = b.review || '';
+    document.getElementById('extDateStart').value = b.dateStart || '';
+    document.getElementById('extDateEnd').value = b.dateEnd || '';
     if (b.rating > 0) selectedExtRating = b.rating;
     updateExtStarsDisplay();
+    calcReadingDays('ext');
     document.getElementById('ratingExtModal').classList.add('active');
 }
 
@@ -740,12 +819,15 @@ function updateExtStarsDisplay() {
     var stars = document.querySelectorAll('#starsExtInput .star-btn');
     for (var i = 0; i < stars.length; i++) stars[i].classList.toggle('active', i < selectedExtRating);
 }
+
 function confirmExtRating() {
     if (!selectedExtRating) { showToast('⚠️ Sélectionne au moins 1 étoile !'); return; }
     for (var i = 0; i < external.length; i++) {
         if (external[i].id === ratingExtBookId) {
             external[i].rating = selectedExtRating;
             external[i].review = document.getElementById('extBookReview').value.trim();
+            external[i].dateStart = document.getElementById('extDateStart').value || null;
+            external[i].dateEnd = document.getElementById('extDateEnd').value || null;
             saveExternal(); renderAll();
             showToast('⭐ Noté ' + selectedExtRating + '/5 !');
             break;
