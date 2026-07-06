@@ -17,7 +17,7 @@
     <meta name="description" content="Ma Pile à Livres - Organise tes lectures, découvre ton prochain livre !">
 
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Lora:wght@400;500;600;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;500;700&family=Open+Sans:wght@300;400;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;600;700&family=Comfortaa:wght@300;400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -344,6 +344,58 @@
                 <button class="theme-card" onclick="setTheme('gold')" data-theme-btn="gold"><div class="theme-preview gold-prev"></div><span>💛 Or</span></button>
             </div>
         </section>
+
+        <!-- POLICE D'ÉCRITURE -->
+<section class="settings-section">
+    <h2>🔤 Police d'écriture</h2>
+    <p class="settings-desc">Choisis la police qui te plaît le plus.</p>
+    <div class="font-grid">
+        <button class="font-card" onclick="setFont('Poppins')" data-font-btn="Poppins" style="font-family:'Poppins',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Poppins</span>
+        </button>
+        <button class="font-card" onclick="setFont('Roboto')" data-font-btn="Roboto" style="font-family:'Roboto',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Roboto</span>
+        </button>
+        <button class="font-card" onclick="setFont('Lora')" data-font-btn="Lora" style="font-family:'Lora',serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Lora</span>
+        </button>
+        <button class="font-card" onclick="setFont('Merriweather')" data-font-btn="Merriweather" style="font-family:'Merriweather',serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Merriweather</span>
+        </button>
+        <button class="font-card" onclick="setFont('Montserrat')" data-font-btn="Montserrat" style="font-family:'Montserrat',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Montserrat</span>
+        </button>
+        <button class="font-card" onclick="setFont('Playfair Display')" data-font-btn="Playfair Display" style="font-family:'Playfair Display',serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Playfair</span>
+        </button>
+        <button class="font-card" onclick="setFont('Open Sans')" data-font-btn="Open Sans" style="font-family:'Open Sans',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Open Sans</span>
+        </button>
+        <button class="font-card" onclick="setFont('Nunito')" data-font-btn="Nunito" style="font-family:'Nunito',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Nunito</span>
+        </button>
+        <button class="font-card" onclick="setFont('Quicksand')" data-font-btn="Quicksand" style="font-family:'Quicksand',sans-serif">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Quicksand</span>
+        </button>
+        <button class="font-card" onclick="setFont('Comfortaa')" data-font-btn="Comfortaa" style="font-family:'Comfortaa',cursive">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Comfortaa</span>
+        </button>
+        <button class="font-card" onclick="setFont('Dancing Script')" data-font-btn="Dancing Script" style="font-family:'Dancing Script',cursive">
+            <span class="font-preview">Aa</span>
+            <span class="font-name">Dancing</span>
+        </button>
+    </div>
+</section>
 
         <section class="settings-section">
             <h2>✨ Effets visuels</h2>
