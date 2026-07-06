@@ -274,6 +274,7 @@ function addBook(e) {
     const title = document.getElementById('bookTitle').value.trim();
     const author = document.getElementById('bookAuthor').value.trim();
     const genre = document.getElementById('bookGenre').value;
+    const format = document.getElementById('bookFormat').value;
     const series = document.getElementById('bookSeries').value.trim();
     const tome = parseInt(document.getElementById('bookTome').value) || null;
     const totalTomes = parseInt(document.getElementById('bookTotalTomes').value) || null;
@@ -281,7 +282,7 @@ function addBook(e) {
 
     books.push({
         id: Date.now(),
-        title, author, genre,
+        title, author, genre, format,
         series: series || null,
         tome,
         status: 'toRead',
@@ -322,7 +323,8 @@ function renderBooks() {
         const ms = b.title.toLowerCase().includes(query) ||
             b.author.toLowerCase().includes(query) ||
             (b.genre && b.genre.toLowerCase().includes(query)) ||
-            (b.series && b.series.toLowerCase().includes(query));
+            (b.series && b.series.toLowerCase().includes(query)) ||
+            (b.format && b.format.toLowerCase().includes(query));
         return mf && ms;
     });
 
@@ -348,6 +350,43 @@ function renderBooks() {
         container.innerHTML = `<div class="empty-state"><span class="emoji">📭</span><p>Aucun livre trouvé.</p></div>`;
         return;
     }
+
+    const formatIcons = {
+        'Broché': '📕', 'Poche': '📒', 'Collector': '✨',
+        'Relié': '📗', 'Numérique': '📱', 'Audio': '🎧', 'Autre': '📦'
+    };
+
+    container.innerHTML = filtered.map(b => {
+        const starsH = b.rating > 0 ? `<div class="stars">${'★'.repeat(b.rating)}${'☆'.repeat(5 - b.rating)}</div>` : '';
+        const reviewH = b.review ? `<div class="review">"${b.review}"</div>` : '';
+        const sc = b.status === 'read' ? 'read' : 'to-read';
+        const sl = b.status === 'read' ? '✅ Lu' : '📖 À lire';
+        const sagaH = b.series ? `<span class="saga-tag">📖 ${b.series}</span>` : '';
+        const tomeH = b.tome ? `<span class="tome-tag">Tome ${b.tome}</span>` : '';
+        
+        // Format
+        const formatIcon = formatIcons[b.format] || '📦';
+        const formatClass = b.format ? b.format.toLowerCase().replace(/[éè]/g, 'e').replace(/\s/g, '-') : 'autre';
+        const formatH = b.format ? `<span class="format-tag format-${formatClass}">${formatIcon} ${b.format}</span>` : '';
+
+        return `<div class="book-card ${sc}">
+            <button class="delete-icon" onclick="deleteBook(${b.id})">🗑</button>
+            <h3>${b.title}</h3>
+            <p class="author">par ${b.author}</p>
+            <span class="genre-tag">${b.genre || 'Autre'}</span>
+            <span class="status-badge ${sc}">${sl}</span>
+            ${formatH}${tomeH}${sagaH}${starsH}${reviewH}
+            <div class="actions">
+                ${b.status === 'toRead'
+                    ? `<button class="btn-mark-read" onclick="markAsRead(${b.id})">✅ Lu</button>`
+                    : `<button class="btn-unread" onclick="markAsUnread(${b.id})">📖 À lire</button>`}
+                ${b.status === 'read'
+                    ? `<button class="btn-rate" onclick="openRatingModal(${b.id})">⭐ ${b.rating > 0 ? 'Modifier' : 'Noter'}</button>`
+                    : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
 
     container.innerHTML = filtered.map(b => {
         const starsH = b.rating > 0 ? `<div class="stars">${'★'.repeat(b.rating)}${'☆'.repeat(5 - b.rating)}</div>` : '';
@@ -912,6 +951,7 @@ function confirmTransfer() {
         title: i.title,
         author: i.author,
         genre: i.genre || 'Autre',
+        format: i.format || 'Broché',
         series: i.series || null,
         tome: i.tome || null,
         status: 'toRead',
@@ -937,7 +977,6 @@ function confirmTransfer() {
     showToast(`📚 "${i.title}" transféré !`);
     closeTransferModal();
 }
-
 // ============================================================
 //  STATS
 // ============================================================
