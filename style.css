@@ -309,3 +309,74 @@ footer{text-align:center;padding:30px;color:#666;font-size:.85rem;position:relat
     .auto-saga-info{padding:0 15px}
     .info-banner{flex-direction:column;text-align:center}
 }
+
+/* ============================================================
+   FONT SELECTOR
+   ============================================================ */
+.font-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+}
+
+.font-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.font-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.font-card.active {
+    border-color: var(--accent-1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.font-preview {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.font-name {
+    font-size: 0.85rem;
+    color: #ccc;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+/* Application globale de la police via variable CSS */
+body {
+    font-family: var(--main-font, 'Poppins'), sans-serif;
+}
+
+/* On garde Poppins pour certains éléments UI (badges, boutons) */
+.nav-btn, .btn, .filter-btn, .stat-label, .status-badge,
+.genre-tag, .tome-tag, .saga-tag, .format-tag, .priority-tag,
+.price-tag, .toast, .input-hint {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+@media(max-width: 600px) {
+    .font-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
