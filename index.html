@@ -29,30 +29,12 @@
         </header>
 
         <section class="stats-bar">
-            <div class="stat">
-                <span class="stat-number" id="totalBooks">0</span>
-                <span class="stat-label">Total</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="toReadBooks">0</span>
-                <span class="stat-label">À lire</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="readBooks">0</span>
-                <span class="stat-label">Lus</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="avgRating">-</span>
-                <span class="stat-label">Note moy.</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="wishlistCount">0</span>
-                <span class="stat-label">À acheter</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="sagasCount">0</span>
-                <span class="stat-label">Sagas</span>
-            </div>
+            <div class="stat"><span class="stat-number" id="totalBooks">0</span><span class="stat-label">Total</span></div>
+            <div class="stat"><span class="stat-number" id="toReadBooks">0</span><span class="stat-label">À lire</span></div>
+            <div class="stat"><span class="stat-number" id="readBooks">0</span><span class="stat-label">Lus</span></div>
+            <div class="stat"><span class="stat-number" id="avgRating">-</span><span class="stat-label">Note moy.</span></div>
+            <div class="stat"><span class="stat-number" id="sagasCount">0</span><span class="stat-label">Sagas</span></div>
+            <div class="stat"><span class="stat-number" id="wishlistCount">0</span><span class="stat-label">À acheter</span></div>
         </section>
 
         <section class="add-section">
@@ -60,12 +42,12 @@
             <form id="addBookForm">
                 <div class="form-row">
                     <div class="input-group">
-                        <label for="bookTitle">Titre</label>
-                        <input type="text" id="bookTitle" placeholder="Ex : Le Petit Prince" required>
+                        <label for="bookTitle">Titre du livre</label>
+                        <input type="text" id="bookTitle" placeholder="Ex : L'Œil du Monde" required>
                     </div>
                     <div class="input-group">
                         <label for="bookAuthor">Auteur</label>
-                        <input type="text" id="bookAuthor" placeholder="Ex : Saint-Exupéry" required>
+                        <input type="text" id="bookAuthor" placeholder="Ex : Robert Jordan" required>
                     </div>
                     <div class="input-group">
                         <label for="bookGenre">Genre</label>
@@ -84,20 +66,23 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="input-group">
-                        <label for="bookSaga">Saga (optionnel)</label>
-                        <select id="bookSaga">
-                            <option value="">Aucune saga</option>
-                        </select>
+                    <div class="input-group saga-input-group">
+                        <label for="bookSeries">Série / Saga (optionnel)</label>
+                        <input type="text" id="bookSeries" placeholder="Ex : La Roue du Temps" list="seriesSuggestions" oninput="updateSeriesSuggestions()">
+                        <datalist id="seriesSuggestions"></datalist>
+                        <span class="input-hint">💡 Les livres avec le même nom de série seront regroupés automatiquement</span>
                     </div>
-                    <div class="input-group">
-                        <label for="bookTome">Numéro de tome</label>
+                    <div class="input-group tome-input-group">
+                        <label for="bookTome">Tome n°</label>
                         <input type="number" id="bookTome" placeholder="Ex : 1" min="1">
                     </div>
+                    <div class="input-group">
+                        <label for="bookTotalTomes">Tomes prévus dans la série</label>
+                        <input type="number" id="bookTotalTomes" placeholder="Ex : 14" min="1">
+                        <span class="input-hint">Remplis une seule fois, se met à jour auto</span>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-add">
-                    <span>📥</span> Ajouter à la pile
-                </button>
+                <button type="submit" class="btn btn-add"><span>📥</span> Ajouter à la pile</button>
             </form>
         </section>
 
@@ -106,13 +91,9 @@
             <p>Laisse le hasard décider pour toi !</p>
             <div class="random-filter">
                 <label>Filtrer par genre :</label>
-                <select id="randomGenreFilter">
-                    <option value="all">Tous les genres</option>
-                </select>
+                <select id="randomGenreFilter"><option value="all">Tous les genres</option></select>
             </div>
-            <button class="btn btn-random" id="randomBtn" onclick="pickRandomBook()">
-                🎰 Choisir un livre au hasard
-            </button>
+            <button class="btn btn-random" id="randomBtn" onclick="pickRandomBook()">🎰 Choisir un livre au hasard</button>
             <div class="random-result" id="randomResult"></div>
         </section>
 
@@ -130,7 +111,7 @@
                     <option value="title">Titre A-Z</option>
                     <option value="author">Auteur A-Z</option>
                     <option value="rating">Note ↓</option>
-                    <option value="saga">Saga</option>
+                    <option value="series">Série</option>
                     <option value="dateAdded">Date d'ajout</option>
                 </select>
             </div>
@@ -147,77 +128,24 @@
         <header>
             <div class="logo">📖</div>
             <h1>Mes Sagas</h1>
-            <p class="subtitle">Suis ta progression dans tes séries préférées</p>
+            <p class="subtitle">Générées automatiquement à partir de tes livres</p>
         </header>
 
         <section class="stats-bar">
-            <div class="stat">
-                <span class="stat-number" id="sagasTotalStat">0</span>
-                <span class="stat-label">Sagas</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="sagasCompletedStat">0</span>
-                <span class="stat-label">Terminées</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="sagasInProgressStat">0</span>
-                <span class="stat-label">En cours</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="sagasTotalTomes">0</span>
-                <span class="stat-label">Tomes total</span>
-            </div>
+            <div class="stat"><span class="stat-number" id="sagasTotalStat">0</span><span class="stat-label">Sagas</span></div>
+            <div class="stat"><span class="stat-number" id="sagasCompletedStat">0</span><span class="stat-label">Terminées</span></div>
+            <div class="stat"><span class="stat-number" id="sagasInProgressStat">0</span><span class="stat-label">En cours</span></div>
+            <div class="stat"><span class="stat-number" id="sagasTotalTomes">0</span><span class="stat-label">Tomes total</span></div>
         </section>
 
-        <section class="add-section">
-            <h2>➕ Créer une saga</h2>
-            <form id="addSagaForm">
-                <div class="form-row">
-                    <div class="input-group">
-                        <label for="sagaName">Nom de la saga</label>
-                        <input type="text" id="sagaName" placeholder="Ex : Harry Potter" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="sagaAuthor">Auteur</label>
-                        <input type="text" id="sagaAuthor" placeholder="Ex : J.K. Rowling" required>
-                    </div>
+        <section class="auto-saga-info">
+            <div class="info-banner">
+                <span class="info-icon">💡</span>
+                <div>
+                    <strong>Les sagas se créent automatiquement !</strong>
+                    <p>Quand tu ajoutes un livre avec un nom de série (ex : "Harry Potter") et un numéro de tome, il est automatiquement regroupé ici. Pas besoin de créer manuellement les sagas.</p>
                 </div>
-                <div class="form-row">
-                    <div class="input-group">
-                        <label for="sagaTotalTomes">Nombre total de tomes</label>
-                        <input type="number" id="sagaTotalTomes" placeholder="Ex : 7" min="1" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="sagaGenre">Genre</label>
-                        <select id="sagaGenre">
-                            <option value="Roman">📖 Roman</option>
-                            <option value="SF">🚀 Science-Fiction</option>
-                            <option value="Fantasy">🐉 Fantasy</option>
-                            <option value="Thriller">🔪 Thriller</option>
-                            <option value="BD">🎨 BD / Manga</option>
-                            <option value="Essai">📝 Essai</option>
-                            <option value="Histoire">🏛️ Histoire</option>
-                            <option value="Autre">📦 Autre</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="sagaStatus">Statut</label>
-                        <select id="sagaStatus">
-                            <option value="ongoing">📝 En cours de parution</option>
-                            <option value="complete">✅ Parution terminée</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="input-group" style="flex:1 1 100%">
-                        <label for="sagaNotes">Notes (optionnel)</label>
-                        <input type="text" id="sagaNotes" placeholder="Ex : Recommandé par un ami...">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-add-saga">
-                    <span>📖</span> Créer la saga
-                </button>
-            </form>
+            </div>
         </section>
 
         <section class="filter-section">
@@ -244,18 +172,9 @@
         </header>
 
         <section class="stats-bar">
-            <div class="stat">
-                <span class="stat-number" id="authorsTotal">0</span>
-                <span class="stat-label">Auteurs</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="authorTopName">-</span>
-                <span class="stat-label">Top auteur</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="authorTopCount">0</span>
-                <span class="stat-label">Livres du top</span>
-            </div>
+            <div class="stat"><span class="stat-number" id="authorsTotal">0</span><span class="stat-label">Auteurs</span></div>
+            <div class="stat"><span class="stat-number" id="authorTopName">-</span><span class="stat-label">Top auteur</span></div>
+            <div class="stat"><span class="stat-number" id="authorTopCount">0</span><span class="stat-label">Livres du top</span></div>
         </section>
 
         <section class="filter-section">
@@ -285,75 +204,39 @@
         </header>
 
         <section class="stats-bar">
-            <div class="stat">
-                <span class="stat-number" id="wishlistTotal">0</span>
-                <span class="stat-label">À acheter</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="wishlistBought">0</span>
-                <span class="stat-label">Achetés</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="wishlistBudget">0 €</span>
-                <span class="stat-label">Budget total</span>
-            </div>
-            <div class="stat">
-                <span class="stat-number" id="wishlistSpent">0 €</span>
-                <span class="stat-label">Dépensé</span>
-            </div>
+            <div class="stat"><span class="stat-number" id="wishlistTotal">0</span><span class="stat-label">À acheter</span></div>
+            <div class="stat"><span class="stat-number" id="wishlistBought">0</span><span class="stat-label">Achetés</span></div>
+            <div class="stat"><span class="stat-number" id="wishlistBudget">0 €</span><span class="stat-label">Budget</span></div>
+            <div class="stat"><span class="stat-number" id="wishlistSpent">0 €</span><span class="stat-label">Dépensé</span></div>
         </section>
 
         <section class="add-section">
             <h2>➕ Ajouter à la liste d'achats</h2>
             <form id="addWishlistForm">
                 <div class="form-row">
-                    <div class="input-group">
-                        <label for="wishTitle">Titre</label>
-                        <input type="text" id="wishTitle" placeholder="Ex : Dune" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="wishAuthor">Auteur</label>
-                        <input type="text" id="wishAuthor" placeholder="Ex : Frank Herbert" required>
-                    </div>
+                    <div class="input-group"><label for="wishTitle">Titre</label><input type="text" id="wishTitle" placeholder="Ex : Dune" required></div>
+                    <div class="input-group"><label for="wishAuthor">Auteur</label><input type="text" id="wishAuthor" placeholder="Ex : Frank Herbert" required></div>
                 </div>
                 <div class="form-row">
                     <div class="input-group">
                         <label for="wishGenre">Genre</label>
                         <select id="wishGenre">
-                            <option value="Roman">📖 Roman</option>
-                            <option value="SF">🚀 Science-Fiction</option>
-                            <option value="Fantasy">🐉 Fantasy</option>
-                            <option value="Thriller">🔪 Thriller</option>
-                            <option value="BD">🎨 BD / Manga</option>
-                            <option value="Essai">📝 Essai</option>
-                            <option value="Poésie">🌸 Poésie</option>
-                            <option value="Histoire">🏛️ Histoire</option>
-                            <option value="Dev perso">🧠 Dév. personnel</option>
+                            <option value="Roman">📖 Roman</option><option value="SF">🚀 SF</option><option value="Fantasy">🐉 Fantasy</option>
+                            <option value="Thriller">🔪 Thriller</option><option value="BD">🎨 BD / Manga</option><option value="Essai">📝 Essai</option>
+                            <option value="Poésie">🌸 Poésie</option><option value="Histoire">🏛️ Histoire</option><option value="Dev perso">🧠 Dév. perso</option>
                             <option value="Autre">📦 Autre</option>
                         </select>
                     </div>
-                    <div class="input-group">
-                        <label for="wishPrice">Prix estimé (€)</label>
-                        <input type="number" id="wishPrice" placeholder="Ex : 15" min="0" step="0.01">
-                    </div>
+                    <div class="input-group"><label for="wishPrice">Prix (€)</label><input type="number" id="wishPrice" placeholder="Ex : 15" min="0" step="0.01"></div>
                     <div class="input-group">
                         <label for="wishPriority">Priorité</label>
-                        <select id="wishPriority">
-                            <option value="3">🔴 Haute</option>
-                            <option value="2" selected>🟡 Moyenne</option>
-                            <option value="1">🟢 Basse</option>
-                        </select>
+                        <select id="wishPriority"><option value="3">🔴 Haute</option><option value="2" selected>🟡 Moyenne</option><option value="1">🟢 Basse</option></select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="input-group" style="flex:1 1 100%">
-                        <label for="wishNotes">Notes / Lien (optionnel)</label>
-                        <input type="text" id="wishNotes" placeholder="Ex : Vu en librairie, lien Amazon...">
-                    </div>
+                    <div class="input-group" style="flex:1 1 100%"><label for="wishNotes">Notes (optionnel)</label><input type="text" id="wishNotes" placeholder="Ex : Vu en librairie..."></div>
                 </div>
-                <button type="submit" class="btn btn-add-wish">
-                    <span>🛒</span> Ajouter à la liste
-                </button>
+                <button type="submit" class="btn btn-add-wish"><span>🛒</span> Ajouter</button>
             </form>
         </section>
 
@@ -364,7 +247,7 @@
                 <button class="filter-btn" onclick="filterWishlist('bought', this)">✅ Achetés</button>
             </div>
             <div class="search-bar">
-                <input type="text" id="wishSearchInput" placeholder="🔍 Rechercher dans la wishlist..." oninput="renderWishlist()">
+                <input type="text" id="wishSearchInput" placeholder="🔍 Rechercher..." oninput="renderWishlist()">
             </div>
         </section>
 
@@ -397,32 +280,14 @@
 
         <section class="settings-section">
             <h2>✨ Effets visuels</h2>
-            <div class="setting-row">
-                <div>
-                    <span class="setting-label">Particules d'arrière-plan</span>
-                    <span class="setting-hint">Petites bulles flottantes</span>
-                </div>
-                <label class="toggle">
-                    <input type="checkbox" id="toggleParticles" checked onchange="toggleParticlesF()">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="setting-row">
-                <div>
-                    <span class="setting-label">Animations des cartes</span>
-                    <span class="setting-hint">Effets au survol</span>
-                </div>
-                <label class="toggle">
-                    <input type="checkbox" id="toggleAnimations" checked onchange="toggleAnimationsF()">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
+            <div class="setting-row"><div><span class="setting-label">Particules</span><span class="setting-hint">Bulles flottantes</span></div><label class="toggle"><input type="checkbox" id="toggleParticles" checked onchange="toggleParticlesF()"><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><span class="setting-label">Animations</span><span class="setting-hint">Effets au survol</span></div><label class="toggle"><input type="checkbox" id="toggleAnimations" checked onchange="toggleAnimationsF()"><span class="toggle-slider"></span></label></div>
         </section>
 
         <section class="settings-section">
             <h2>💾 Données</h2>
             <div class="data-actions">
-                <button class="btn btn-export" onclick="exportData()">📤 Exporter (JSON)</button>
+                <button class="btn btn-export" onclick="exportData()">📤 Exporter</button>
                 <button class="btn btn-import" onclick="document.getElementById('importFile').click()">📥 Importer</button>
                 <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
                 <button class="btn btn-danger" onclick="clearAllData()">🗑️ Tout supprimer</button>
@@ -432,10 +297,9 @@
         <section class="settings-section">
             <h2>ℹ️ À propos</h2>
             <div class="about-card">
-                <p><strong>📚 Ma Pile à Livres</strong></p>
-                <p>Version 4.0</p>
-                <p>Fait avec ❤️ en HTML, CSS & JavaScript</p>
-                <p class="about-small">Les données sont sauvegardées localement dans ton navigateur.</p>
+                <p><strong>📚 Ma Pile à Livres</strong> — Version 5.0</p>
+                <p>Sagas automatiques, auteurs, wishlist, thèmes</p>
+                <p class="about-small">Données sauvegardées dans le navigateur (localStorage)</p>
             </div>
         </section>
     </div>
@@ -453,7 +317,7 @@
                 <span class="star-btn" onclick="setRating(4)">★</span>
                 <span class="star-btn" onclick="setRating(5)">★</span>
             </div>
-            <textarea id="bookReview" placeholder="Ton avis en quelques mots (optionnel)..."></textarea>
+            <textarea id="bookReview" placeholder="Ton avis (optionnel)..."></textarea>
             <button class="btn btn-confirm" onclick="confirmRating()">✅ Confirmer</button>
         </div>
     </div>
@@ -462,22 +326,29 @@
     <div class="modal-overlay" id="transferModal">
         <div class="modal">
             <button class="modal-close" onclick="closeTransferModal()">✕</button>
-            <h2>📚 Transférer à la bibliothèque</h2>
+            <h2>📚 Transférer</h2>
             <p class="modal-book-title" id="transferBookTitle"></p>
-            <p class="transfer-desc">Ce livre sera ajouté à ta pile de lecture avec le statut "À lire".</p>
-            <div class="transfer-options">
-                <label class="transfer-option">
-                    <input type="checkbox" id="removeFromWishlist" checked>
-                    <span>Retirer de la liste d'achats</span>
-                </label>
-            </div>
+            <p class="transfer-desc">Ajouter à la bibliothèque comme "À lire".</p>
+            <div class="transfer-options"><label class="transfer-option"><input type="checkbox" id="removeFromWishlist" checked><span>Retirer de la wishlist</span></label></div>
             <button class="btn btn-confirm" onclick="confirmTransfer()">📚 Transférer</button>
         </div>
     </div>
 
-    <footer>
-        <p>📚 Ma Pile à Livres v4.0 — Fait avec ❤️ — 2025</p>
-    </footer>
+    <!-- MODAL EDIT SAGA -->
+    <div class="modal-overlay" id="editSagaModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeEditSagaModal()">✕</button>
+            <h2>✏️ Modifier la saga</h2>
+            <p class="modal-book-title" id="editSagaTitle"></p>
+            <div class="input-group" style="margin:15px 0;text-align:left">
+                <label for="editSagaTotalTomes" style="color:#aaa">Nombre total de tomes</label>
+                <input type="number" id="editSagaTotalTomes" min="1" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Poppins',sans-serif">
+            </div>
+            <button class="btn btn-confirm" onclick="confirmEditSaga()">✅ Sauvegarder</button>
+        </div>
+    </div>
+
+    <footer><p>📚 Ma Pile à Livres v5.0 — Fait avec ❤️ — 2025</p></footer>
 
     <script src="script.js"></script>
 </body>
