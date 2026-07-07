@@ -15,7 +15,7 @@
     <!-- SEO & accessibilité -->
     <meta name="description" content="Organise tes lectures, découvre ton prochain livre ! Gère ta bibliothèque, tes sagas, tes auteurs et ta wishlist.">
 
-    <!-- Preconnect pour performances Google Fonts -->
+    <!-- Preconnect Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Lora:wght@400;500;600;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@400;500;700&family=Open+Sans:wght@300;400;600;700&family=Nunito:wght@300;400;600;700&family=Dancing+Script:wght@400;600;700&family=Comfortaa:wght@300;400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -195,7 +195,7 @@
                 <span class="info-icon" aria-hidden="true">💡</span>
                 <div>
                     <strong>Livres externes à ta collection</strong>
-                    <p>Comptés dans tes stats mais pas dans ta bibliothèque perso ni dans les sagas. Coche "je veux l'acheter" pour l'ajouter à la wishlist !</p>
+                    <p>Comptés dans tes stats mais pas dans ta bibliothèque perso. Coche "je veux l'acheter" pour l'ajouter à la wishlist !</p>
                 </div>
             </div>
         </section>
@@ -251,7 +251,7 @@
                     <div class="input-group">
                         <label for="extSeries">Série <span class="optional-label">(optionnel)</span></label>
                         <input type="text" id="extSeries" placeholder="Ex : Harry Potter" autocomplete="off">
-                        <span class="input-hint">💡 Non répertoriée dans l'onglet Sagas</span>
+                        <span class="input-hint">💡 Visible dans l'onglet Sagas via le filtre "Empruntées"</span>
                     </div>
                     <div class="input-group tome-input-group">
                         <label for="extTome">Tome n°</label>
@@ -322,7 +322,7 @@
         <header>
             <div class="logo" aria-hidden="true">📚</div>
             <h1>Mes Sagas</h1>
-            <p class="subtitle">Générées automatiquement à partir de ta bibliothèque</p>
+            <p class="subtitle">Générées automatiquement à partir de ta bibliothèque et de tes emprunts</p>
         </header>
 
         <section class="stats-bar" aria-label="Statistiques sagas">
@@ -330,6 +330,8 @@
             <div class="stat"><span class="stat-number" id="sagasCompletedStat">0</span><span class="stat-label">✅ Terminées</span></div>
             <div class="stat"><span class="stat-number" id="sagasInProgressStat">0</span><span class="stat-label">🔄 En cours</span></div>
             <div class="stat"><span class="stat-number" id="sagasTotalTomes">0</span><span class="stat-label">📖 Tomes possédés</span></div>
+            <div class="stat"><span class="stat-number" id="sagasExtStat">0</span><span class="stat-label">📖 Sagas empruntées</span></div>
+            <div class="stat"><span class="stat-number" id="sagasExtTomes">0</span><span class="stat-label">📚 Tomes empruntés</span></div>
         </section>
 
         <section class="auto-saga-info" aria-label="Information sagas">
@@ -337,7 +339,7 @@
                 <span class="info-icon" aria-hidden="true">💡</span>
                 <div>
                     <strong>Les sagas se créent automatiquement !</strong>
-                    <p>Uniquement les livres de ta bibliothèque perso sont regroupés ici.</p>
+                    <p>Les livres de ta bibliothèque perso ET tes emprunts sont regroupés ici. Utilise le filtre "Empruntées" pour voir uniquement les sagas externes.</p>
                 </div>
             </div>
         </section>
@@ -348,6 +350,7 @@
                 <button class="filter-btn" data-filter="inProgress" data-target="sagas" type="button">🔄 En cours</button>
                 <button class="filter-btn" data-filter="completed" data-target="sagas" type="button">✅ Terminées</button>
                 <button class="filter-btn" data-filter="notStarted" data-target="sagas" type="button">⏳ Pas commencées</button>
+                <button class="filter-btn" data-filter="external" data-target="sagas" type="button">📖 Empruntées</button>
             </div>
             <div class="search-bar">
                 <input type="search" id="sagaSearchInput" placeholder="🔍 Rechercher..." autocomplete="off">
@@ -473,6 +476,10 @@
                     <div class="input-group tome-input-group">
                         <label for="wishTome">Tome n°</label>
                         <input type="number" id="wishTome" placeholder="3" min="1" inputmode="numeric">
+                    </div>
+                    <div class="input-group tome-input-group">
+                        <label for="wishTotalTomes">Tomes prévus</label>
+                        <input type="number" id="wishTotalTomes" placeholder="7" min="1" inputmode="numeric">
                     </div>
                     <div class="input-group">
                         <label for="wishPrice">Prix (€)</label>
@@ -633,7 +640,7 @@
         <section class="settings-section" aria-label="À propos">
             <h2>ℹ️ À propos</h2>
             <div class="about-card">
-                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.2</p>
+                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.3</p>
                 <p>Fait avec ❤️ — 2025</p>
                 <p class="about-small">Données sauvegardées localement + cloud (Firebase)</p>
             </div>
@@ -861,6 +868,10 @@
                     <input type="number" id="editWishTome" min="1" inputmode="numeric">
                 </div>
                 <div class="input-group">
+                    <label for="editWishTotalTomes">Tomes prévus</label>
+                    <input type="number" id="editWishTotalTomes" min="1" inputmode="numeric">
+                </div>
+                <div class="input-group">
                     <label for="editWishPrice">Prix (€)</label>
                     <input type="number" id="editWishPrice" min="0" step="0.01" inputmode="decimal">
                 </div>
@@ -919,6 +930,14 @@
                         <option value="Ma collection">📚 Ma collection</option>
                     </select>
                 </div>
+                <div class="input-group">
+                    <label for="editExtStatus">Statut</label>
+                    <select id="editExtStatus">
+                        <option value="returned">📤 Retiré</option>
+                        <option value="given">🎁 Rendu</option>
+                        <option value="kept">📚 Laissé</option>
+                    </select>
+                </div>
             </div>
             <div class="form-row">
                 <div class="input-group">
@@ -944,7 +963,7 @@
 
     <!-- Footer -->
     <footer>
-        <p>📚 Ma Pile à Livres v11.2 — Fait avec ❤️ — 2025</p>
+        <p>📚 Ma Pile à Livres v11.3 — Fait avec ❤️ — 2025</p>
     </footer>
 
     <!-- ============================================================ -->
