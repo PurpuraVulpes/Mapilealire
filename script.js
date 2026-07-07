@@ -1,6 +1,6 @@
 // ============================================================
-//  MA PILE À LIVRES — SCRIPT PRINCIPAL v11.2
-//  Optimisé : événements délégués, bugs corrigés, performances
+//  MA PILE À LIVRES — SCRIPT PRINCIPAL v11.3
+//  Optimisé : événements délégués, sagas empruntées, tomes prévus
 // ============================================================
 
 (function () {
@@ -37,6 +37,17 @@
     };
 
     // ============================================================
+    //  CONSTANTES
+    // ============================================================
+    var FORMAT_ICONS = { 'Broché': '📕', 'Poche': '📒', 'Collector': '✨', 'Relié': '📗', 'Audiobook': '🎧' };
+    var SOURCE_ICONS = { 'Bibliothèque': '🏛️', 'Internet': '💻', 'École': '🎓', 'Ma collection': '📚' };
+    var EXT_STATUS_LABELS = { 'returned': '📤 Retiré', 'given': '🎁 Rendu', 'kept': '📚 Laissé' };
+    var EXT_STATUS_CLASSES = { 'returned': 'ext-returned', 'given': 'ext-given', 'kept': 'ext-kept' };
+    var PRIORITY_LABELS = { 3: '🔴 Haute', 2: '🟡 Moyenne', 1: '🟢 Basse' };
+    var PRIORITY_CLASSES = { 3: 'high', 2: 'medium', 1: 'low' };
+    var MS_PER_DAY = 86400000;
+
+    // ============================================================
     //  HELPERS
     // ============================================================
     function $(id) { return document.getElementById(id); }
@@ -44,6 +55,11 @@
     function setText(id, value) {
         var el = $(id);
         if (el) el.textContent = value;
+    }
+
+    function setFormVal(id, value) {
+        var el = $(id);
+        if (el) el.value = value;
     }
 
     function getVal(id) {
@@ -89,19 +105,16 @@
     }
 
     function escapeHTML(str) {
-        if (!str) return '';
+        if (str === null || str === undefined || str === '') return '';
         var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
+        div.appendChild(document.createTextNode(String(str)));
         return div.innerHTML;
     }
 
-    function nowDateStr() {
-        return new Date().toLocaleDateString('fr-FR');
-    }
+    function nowDateStr() { return new Date().toLocaleDateString('fr-FR'); }
+    function nowTimestamp() { return Date.now(); }
 
-    function nowTimestamp() {
-        return Date.now();
-    }
+    function getSeriesKey(name) { return name.trim().toLowerCase(); }
 
     // ============================================================
     //  SAUVEGARDE
@@ -144,32 +157,31 @@
             if (tab) switchTab(tab, btn);
         });
 
-        // Filtres
+        // Filtres (biblio, external, sagas, wishlist)
         delegateClick(document.body, '.filter-btn[data-filter]', function (btn) {
             var filter = btn.getAttribute('data-filter');
             var target = btn.getAttribute('data-target');
-            if (target === 'home') filterBooks(filter, btn);
-            else if (target === 'external') filterExt(filter, btn);
-            else if (target === 'sagas') filterSagas(filter, btn);
-            else if (target === 'wishlist') filterWishlist(filter, btn);
+            switch (target) {
+                case 'home':     filterBooks(filter, btn); break;
+                case 'external': filterExt(filter, btn); break;
+                case 'sagas':    filterSagas(filter, btn); break;
+                case 'wishlist': filterWishlist(filter, btn); break;
+            }
         });
 
-        // Thèmes
+        // Thèmes & polices
         delegateClick(document.body, '.theme-card[data-theme-btn]', function (btn) {
             setTheme(btn.getAttribute('data-theme-btn'));
         });
-
-        // Polices
         delegateClick(document.body, '.font-card[data-font-btn]', function (btn) {
             setFont(btn.getAttribute('data-font-btn'));
         });
 
-        // Étoiles
+        // Étoiles modales
         delegateClick($('starsInput'), '.star-btn', function (btn) {
             var r = parseInt(btn.getAttribute('data-rating'));
             if (r) { state.selectedRating = r; updateStarsDisplay(); }
         });
-
         delegateClick($('starsExtInput'), '.star-btn', function (btn) {
             var r = parseInt(btn.getAttribute('data-rating'));
             if (r) { state.selectedExtRating = r; updateExtStarsDisplay(); }
@@ -204,7 +216,7 @@
         bindClick('closeEditWishModal', function () { closeModal('editWishModal'); state.editWishId = null; });
         bindClick('closeEditExtModal', function () { closeModal('editExtModal'); state.editExtId = null; });
 
-        // Fermeture modale par clic sur overlay
+        // Fermeture par clic overlay
         var overlays = document.querySelectorAll('.modal-overlay');
         for (var i = 0; i < overlays.length; i++) {
             overlays[i].addEventListener('click', function (e) {
@@ -224,7 +236,6 @@
         bindClick('btnExport', exportData);
         bindClick('btnImportTrigger', function () { var f = $('importFile'); if (f) f.click(); });
         bindClick('btnClearAll', clearAllData);
-
         var importFile = $('importFile');
         if (importFile) importFile.addEventListener('change', importData);
 
@@ -258,34 +269,17 @@
         bindClick('btnPullData', firebasePullData);
         bindClick('btnLogout', firebaseLogout);
 
-        // Délégation pour actions dynamiques
+        // Délégation actions dynamiques
         delegateClick(document.body, '[data-action]', handleDynamicAction);
     }
 
-    function bindClick(id, fn) {
-        var el = $(id);
-        if (el) el.addEventListener('click', fn);
-    }
-
-    function bindChange(id, fn) {
-        var el = $(id);
-        if (el) el.addEventListener('change', fn);
-    }
-
-    function bindInput(id, fn) {
-        var el = $(id);
-        if (el) el.addEventListener('input', fn);
-    }
-
-    function bindForm(id, fn) {
-        var el = $(id);
-        if (el) el.addEventListener('submit', fn);
-    }
+    function bindClick(id, fn) { var el = $(id); if (el) el.addEventListener('click', fn); }
+    function bindChange(id, fn) { var el = $(id); if (el) el.addEventListener('change', fn); }
+    function bindInput(id, fn) { var el = $(id); if (el) el.addEventListener('input', fn); }
+    function bindForm(id, fn) { var el = $(id); if (el) el.addEventListener('submit', fn); }
 
     function delegateClick(parent, selector, fn) {
-        if (typeof parent === 'string') {
-            parent = document.querySelector(parent);
-        }
+        if (typeof parent === 'string') parent = document.querySelector(parent);
         if (!parent) return;
         parent.addEventListener('click', function (e) {
             var target = e.target.closest(selector);
@@ -302,27 +296,27 @@
         var value = btn.getAttribute('data-value');
 
         switch (action) {
-            case 'markRead':       markAsRead(id); break;
-            case 'markUnread':     markAsUnread(id); break;
-            case 'deleteBook':     deleteBook(id); break;
-            case 'rateBook':       openRatingModal(id); break;
-            case 'editBook':       openEditBookModal(id); break;
-
-            case 'deleteExt':      deleteExternal(id); break;
-            case 'rateExt':        openRatingExtModal(id); break;
-            case 'editExt':        openEditExtModal(id); break;
-            case 'changeExtStatus': changeExtStatus(id, value); break;
-            case 'toggleExtBuy':   toggleExtWantBuy(id); break;
-
-            case 'deleteWish':     deleteWishlistItem(id); break;
-            case 'markBought':     markAsBought(id); break;
-            case 'markUnbought':   markAsUnbought(id); break;
-            case 'transferWish':   openTransferModal(id); break;
-            case 'editWish':       openEditWishModal(id); break;
-
-            case 'editSaga':       openEditSagaModal(value); break;
-
-            case 'toggleAuthor':   toggleAuthorBooks(value, btn); break;
+            // Bibliothèque
+            case 'markRead':    markAsRead(id); break;
+            case 'markUnread':  markAsUnread(id); break;
+            case 'deleteBook':  deleteBook(id); break;
+            case 'rateBook':    openRatingModal(id); break;
+            case 'editBook':    openEditBookModal(id); break;
+            // Externe
+            case 'deleteExt':   deleteExternal(id); break;
+            case 'rateExt':     openRatingExtModal(id); break;
+            case 'editExt':     openEditExtModal(id); break;
+            case 'toggleExtBuy': toggleExtWantBuy(id); break;
+            // Wishlist
+            case 'deleteWish':   deleteWishlistItem(id); break;
+            case 'markBought':   markAsBought(id); break;
+            case 'markUnbought': markAsUnbought(id); break;
+            case 'transferWish': openTransferModal(id); break;
+            case 'editWish':     openEditWishModal(id); break;
+            // Sagas
+            case 'editSaga':     openEditSagaModal(value); break;
+            // Auteurs
+            case 'toggleAuthor': toggleAuthorBooks(value, btn); break;
         }
     }
 
@@ -355,10 +349,13 @@
         if (target) target.classList.add('active');
         if (btn) btn.classList.add('active');
 
-        if (tab === 'authors') renderAuthors();
-        else if (tab === 'sagas') renderSagas();
-        else if (tab === 'external') renderExternal();
-        else if (tab === 'wishlist') renderWishlist();
+        // Rafraîchir la page active
+        switch (tab) {
+            case 'authors':  renderAuthors(); break;
+            case 'sagas':    renderSagas(); break;
+            case 'external': renderExternal(); break;
+            case 'wishlist': renderWishlist(); break;
+        }
     }
 
     function setTheme(t) {
@@ -474,10 +471,7 @@
             return;
         }
 
-        var start = new Date(startEl.value);
-        var end = new Date(endEl.value);
-        var days = Math.floor((end - start) / 86400000);
-
+        var days = Math.floor((new Date(endEl.value) - new Date(startEl.value)) / MS_PER_DAY);
         displayEl.classList.add('active');
         displayEl.classList.remove('warning');
 
@@ -486,15 +480,13 @@
             displayEl.classList.add('warning');
         } else {
             var total = days + 1;
-            displayEl.textContent = total === 1
-                ? '⚡ Lu en 1 jour !'
-                : '📖 Lu en ' + total + ' jours';
+            displayEl.textContent = total === 1 ? '⚡ Lu en 1 jour !' : '📖 Lu en ' + total + ' jours';
         }
     }
 
     function getReadingDaysText(startDate, endDate) {
         if (!startDate || !endDate) return null;
-        var days = Math.floor((new Date(endDate) - new Date(startDate)) / 86400000);
+        var days = Math.floor((new Date(endDate) - new Date(startDate)) / MS_PER_DAY);
         return days >= 0 ? days + 1 : null;
     }
 
@@ -529,8 +521,6 @@
     // ============================================================
     //  GESTION DES SÉRIES
     // ============================================================
-    function getSeriesKey(name) { return name.trim().toLowerCase(); }
-
     function getAllSeries() {
         var seriesMap = {};
         for (var i = 0; i < books.length; i++) {
@@ -549,9 +539,8 @@
 
         var keys = Object.keys(seriesMap);
         for (var k = 0; k < keys.length; k++) {
-            var key = keys[k];
-            var s = seriesMap[key];
-            var meta = sagasMeta[key] || {};
+            var s = seriesMap[keys[k]];
+            var meta = sagasMeta[keys[k]] || {};
 
             s.books.sort(function (a, b) { return (a.tome || 999) - (b.tome || 999); });
 
@@ -570,28 +559,56 @@
         return seriesMap;
     }
 
+    function getExternalSeries() {
+        var map = {};
+        for (var i = 0; i < external.length; i++) {
+            var e = external[i];
+            if (!e.series || !e.series.trim()) continue;
+
+            var key = getSeriesKey(e.series);
+            if (!map[key]) {
+                map[key] = {
+                    key: key, name: e.series.trim(), author: e.author,
+                    genre: e.genre, books: [], isExternal: true
+                };
+            }
+            map[key].books.push(e);
+        }
+
+        var keys = Object.keys(map);
+        for (var k = 0; k < keys.length; k++) {
+            var s = map[keys[k]];
+            s.books.sort(function (a, b) { return (a.tome || 999) - (b.tome || 999); });
+
+            // Trouver le totalTomes max parmi les livres
+            var maxTotal = 0;
+            for (var eb = 0; eb < s.books.length; eb++) {
+                if (s.books[eb].totalTomes && s.books[eb].totalTomes > maxTotal) {
+                    maxTotal = s.books[eb].totalTomes;
+                }
+            }
+            s.totalTomes = maxTotal || s.books.length;
+            s.readCount = s.books.length; // Les externes sont considérés comme lus
+            s.ownedCount = s.books.length;
+            s.progress = s.totalTomes > 0 ? Math.round((s.readCount / s.totalTomes) * 100) : 0;
+            s.isCompleted = s.readCount >= s.totalTomes && s.totalTomes > 0;
+            s.isStarted = true;
+        }
+        return map;
+    }
+
     function updateSeriesSuggestions() {
         var datalist = $('seriesSuggestions');
         if (!datalist) return;
 
         var allSeries = getAllSeries();
-        var names = [];
-        var values = Object.keys(allSeries);
-        for (var i = 0; i < values.length; i++) {
-            var n = allSeries[values[i]].name;
-            if (names.indexOf(n) === -1) names.push(n);
-        }
+        var names = collectSeriesNames(allSeries);
+        datalist.innerHTML = buildDatalistOptions(names);
 
-        var html = '';
-        for (var j = 0; j < names.length; j++) {
-            html += '<option value="' + escapeHTML(names[j]) + '">';
-        }
-        datalist.innerHTML = html;
-
+        // Auto-fill tomes prévus
         var input = $('bookSeries');
         if (input && input.value.trim()) {
-            var key = getSeriesKey(input.value);
-            var meta = sagasMeta[key];
+            var meta = sagasMeta[getSeriesKey(input.value)];
             if (meta && meta.totalTomes) {
                 var totInput = $('bookTotalTomes');
                 if (totInput && !totInput.value) totInput.value = meta.totalTomes;
@@ -604,31 +621,36 @@
         if (!datalist) return;
 
         var allSeries = getAllSeries();
-        var names = [];
-        var values = Object.keys(allSeries);
-        for (var i = 0; i < values.length; i++) {
-            var n = allSeries[values[i]].name;
-            if (names.indexOf(n) === -1) names.push(n);
-        }
+        var names = collectSeriesNames(allSeries);
         for (var j = 0; j < wishlist.length; j++) {
             if (wishlist[j].series && names.indexOf(wishlist[j].series) === -1) {
                 names.push(wishlist[j].series);
             }
         }
+        datalist.innerHTML = buildDatalistOptions(names);
+    }
 
-        var html = '';
-        for (var k = 0; k < names.length; k++) {
-            html += '<option value="' + escapeHTML(names[k]) + '">';
+    function collectSeriesNames(seriesMap) {
+        var names = [];
+        var keys = Object.keys(seriesMap);
+        for (var i = 0; i < keys.length; i++) {
+            var n = seriesMap[keys[i]].name;
+            if (names.indexOf(n) === -1) names.push(n);
         }
-        datalist.innerHTML = html;
+        return names;
+    }
+
+    function buildDatalistOptions(names) {
+        var html = '';
+        for (var i = 0; i < names.length; i++) {
+            html += '<option value="' + escapeHTML(names[i]) + '">';
+        }
+        return html;
     }
 
     // ============================================================
-    //  FORMAT & SOURCE HELPERS
+    //  HTML HELPERS
     // ============================================================
-    var FORMAT_ICONS = { 'Broché': '📕', 'Poche': '📒', 'Collector': '✨', 'Relié': '📗', 'Audiobook': '🎧' };
-    var SOURCE_ICONS = { 'Bibliothèque': '🏛️', 'Internet': '💻', 'École': '🎓', 'Ma collection': '📚' };
-
     function getFormatHtml(format) {
         if (!format) return '';
         var icon = FORMAT_ICONS[format] || '📕';
@@ -656,18 +678,17 @@
         return '<div class="review">"' + escapeHTML(review) + '"</div>';
     }
 
-    // ============================================================
-    //  MODALE HELPERS
-    // ============================================================
-    function openModal(id) {
-        var m = $(id);
-        if (m) m.classList.add('active');
+    function buildTomeHtml(tome, totalTomes) {
+        if (!tome) return '';
+        var text = 'Tome ' + tome + (totalTomes ? '/' + totalTomes : '');
+        return '<span class="tome-tag">' + text + '</span>';
     }
 
-    function closeModal(id) {
-        var m = $(id);
-        if (m) m.classList.remove('active');
-    }
+    // ============================================================
+    //  MODALES HELPERS
+    // ============================================================
+    function openModal(id) { var m = $(id); if (m) m.classList.add('active'); }
+    function closeModal(id) { var m = $(id); if (m) m.classList.remove('active'); }
 
     // ============================================================
     //  BIBLIOTHÈQUE — AJOUT
@@ -676,17 +697,15 @@
         e.preventDefault();
         var title = getVal('bookTitle');
         var author = getVal('bookAuthor');
-        var genre = getRawVal('bookGenre');
-        var format = getRawVal('bookFormat');
-        var series = getVal('bookSeries');
-        var tome = parseInt(getRawVal('bookTome')) || null;
-        var totalTomes = parseInt(getRawVal('bookTotalTomes')) || null;
-
         if (!title || !author) { showToast('⚠️ Titre et auteur requis !'); return; }
 
+        var series = getVal('bookSeries');
+        var totalTomes = parseInt(getRawVal('bookTotalTomes')) || null;
+
         books.push({
-            id: nowTimestamp(), title: title, author: author, genre: genre, format: format,
-            series: series || null, tome: tome,
+            id: nowTimestamp(), title: title, author: author,
+            genre: getRawVal('bookGenre'), format: getRawVal('bookFormat'),
+            series: series || null, tome: parseInt(getRawVal('bookTome')) || null,
             status: 'toRead', rating: 0, review: '',
             dateAdded: nowDateStr(), dateRead: null,
             dateStart: null, dateEnd: null
@@ -717,10 +736,7 @@
         var sortBy = getRawVal('bookSortSelect') || 'default';
         var filter = state.currentFilter;
 
-        var filtered = [];
-        for (var i = 0; i < books.length; i++) {
-            var b = books[i];
-
+        var filtered = books.filter(function (b) {
             var matchFilter = filter === 'all'
                 || (filter === 'toRead' && b.status === 'toRead')
                 || (filter === 'read' && b.status === 'read')
@@ -734,8 +750,8 @@
                 || (b.series && b.series.toLowerCase().indexOf(query) !== -1)
                 || (b.format && b.format.toLowerCase().indexOf(query) !== -1);
 
-            if (matchFilter && matchSearch) filtered.push(b);
-        }
+            return matchFilter && matchSearch;
+        });
 
         filtered.sort(function (a, b) {
             switch (sortBy) {
@@ -748,9 +764,7 @@
                     return (a.tome || 999) - (b.tome || 999);
                 case 'dateAdded': return b.id - a.id;
                 default:
-                    if (a.status !== b.status) {
-                        return a.status === 'toRead' ? -1 : 1;
-                    }
+                    if (a.status !== b.status) return a.status === 'toRead' ? -1 : 1;
                     return b.rating - a.rating;
             }
         });
@@ -766,8 +780,7 @@
             var sc = bk.status === 'read' ? 'read' : 'to-read';
             var sl = bk.status === 'read' ? '✅ Lu' : '📖 À lire';
             var sagaH = bk.series ? '<span class="saga-tag">📖 ' + escapeHTML(bk.series) + '</span>' : '';
-            var tomeH = bk.tome ? '<span class="tome-tag">Tome ' + bk.tome + '</span>' : '';
-            var readingH = (bk.status === 'read') ? buildReadingHtml(bk) : '';
+            var readingH = bk.status === 'read' ? buildReadingHtml(bk) : '';
 
             parts.push(
                 '<div class="book-card ' + sc + '">' +
@@ -776,7 +789,7 @@
                 '<p class="author">par ' + escapeHTML(bk.author) + '</p>' +
                 '<span class="genre-tag">' + escapeHTML(bk.genre || 'Roman') + '</span>' +
                 '<span class="status-badge ' + sc + '">' + sl + '</span>' +
-                getFormatHtml(bk.format) + tomeH + sagaH + readingH +
+                getFormatHtml(bk.format) + buildTomeHtml(bk.tome) + sagaH + readingH +
                 buildStarsHtml(bk.rating) + buildReviewHtml(bk.review) +
                 '<div class="actions">' +
                 (bk.status === 'toRead'
@@ -794,10 +807,14 @@
 
     function filterBooks(f, btn) {
         state.currentFilter = f;
-        var btns = document.querySelectorAll('#page-home .filter-btn');
-        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-        if (btn) btn.classList.add('active');
+        setActiveFilter('#page-home', btn);
         renderBooks();
+    }
+
+    function setActiveFilter(pageSelector, activeBtn) {
+        var btns = document.querySelectorAll(pageSelector + ' .filter-btn');
+        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+        if (activeBtn) activeBtn.classList.add('active');
     }
 
     function markAsRead(id) {
@@ -833,13 +850,9 @@
 
         if (book.series) {
             var key = getSeriesKey(book.series);
-            var hasOthers = false;
-            for (var i = 0; i < books.length; i++) {
-                if (books[i].series && getSeriesKey(books[i].series) === key) {
-                    hasOthers = true;
-                    break;
-                }
-            }
+            var hasOthers = books.some(function (b) {
+                return b.series && getSeriesKey(b.series) === key;
+            });
             if (!hasOthers) delete sagasMeta[key];
             saveSagasMeta();
         }
@@ -859,9 +872,9 @@
         if (!b) return;
 
         setText('modalBookTitle', b.title);
-        var rv = $('bookReview'); if (rv) rv.value = b.review || '';
-        var ds = $('bookDateStart'); if (ds) ds.value = b.dateStart || '';
-        var de = $('bookDateEnd'); if (de) de.value = b.dateEnd || '';
+        setFormVal('bookReview', b.review || '');
+        setFormVal('bookDateStart', b.dateStart || '');
+        setFormVal('bookDateEnd', b.dateEnd || '');
 
         if (b.rating > 0) state.selectedRating = b.rating;
         updateStarsDisplay();
@@ -878,7 +891,6 @@
 
     function confirmRating() {
         if (!state.selectedRating) { showToast('⚠️ Sélectionne au moins 1 étoile !'); return; }
-
         var b = findById(books, state.ratingBookId);
         if (!b) return;
 
@@ -898,12 +910,9 @@
     // ============================================================
     function pickRandomBook() {
         var gf = getRawVal('randomGenreFilter');
-        var cands = [];
-        for (var i = 0; i < books.length; i++) {
-            if (books[i].status === 'toRead' && (gf === 'all' || books[i].genre === gf)) {
-                cands.push(books[i]);
-            }
-        }
+        var cands = books.filter(function (b) {
+            return b.status === 'toRead' && (gf === 'all' || b.genre === gf);
+        });
 
         var rd = $('randomResult');
         var btn = $('randomBtn');
@@ -965,27 +974,25 @@
         var author = getVal('extAuthor');
         if (!title || !author) { showToast('⚠️ Titre et auteur requis !'); return; }
 
-        var genre = getRawVal('extGenre');
-        var source = getRawVal('extSource');
         var series = getVal('extSeries');
-        var tome = parseInt(getRawVal('extTome')) || null;
-        var totalTomes = parseInt(getRawVal('extTotalTomes')) || null;
-        var status = getRawVal('extStatus');
-        var notes = getVal('extNotes');
         var wtb = $('extWantToBuy');
         var wantToBuy = wtb ? wtb.checked : false;
 
         var extId = nowTimestamp();
         external.push({
-            id: extId, title: title, author: author, genre: genre, source: source,
-            series: series || null, tome: tome, totalTomes: totalTomes,
-            status: status, notes: notes,
+            id: extId, title: title, author: author,
+            genre: getRawVal('extGenre'), source: getRawVal('extSource'),
+            series: series || null,
+            tome: parseInt(getRawVal('extTome')) || null,
+            totalTomes: parseInt(getRawVal('extTotalTomes')) || null,
+            status: getRawVal('extStatus'),
+            notes: getVal('extNotes'),
             wantToBuy: wantToBuy, rating: 0, review: '',
             dateAdded: nowDateStr(), dateStart: null, dateEnd: null
         });
 
         if (wantToBuy) {
-            addToWishlistFromExternal(extId, title, author, genre, series, tome, notes);
+            addToWishlistFromExternal(extId, title, author, getRawVal('extGenre'), series, parseInt(getRawVal('extTome')) || null, getVal('extNotes'));
         }
 
         saveExternal();
@@ -996,18 +1003,18 @@
     }
 
     function addToWishlistFromExternal(extId, title, author, genre, series, tome, notes) {
-        for (var i = 0; i < wishlist.length; i++) {
-            if (wishlist[i].title.toLowerCase() === title.toLowerCase() &&
-                wishlist[i].author.toLowerCase() === author.toLowerCase()) {
-                return;
-            }
-        }
+        var exists = wishlist.some(function (w) {
+            return w.title.toLowerCase() === title.toLowerCase() &&
+                   w.author.toLowerCase() === author.toLowerCase();
+        });
+        if (exists) return;
+
         wishlist.push({
             id: nowTimestamp() + 1, title: title, author: author, genre: genre,
             format: 'Broché', price: 0, priority: 2,
             notes: notes ? ('Vient de "empruntés" : ' + notes) : 'Vient de "empruntés"',
-            series: series || null, tome: tome, status: 'toBuy',
-            dateAdded: nowDateStr(), dateBought: null,
+            series: series || null, tome: tome, totalTomes: null,
+            status: 'toBuy', dateAdded: nowDateStr(), dateBought: null,
             fromExternal: extId
         });
         saveWishlist();
@@ -1021,9 +1028,7 @@
         var sortBy = getRawVal('extSortSelect') || 'default';
         var filter = state.extFilter;
 
-        var filtered = [];
-        for (var i = 0; i < external.length; i++) {
-            var e = external[i];
+        var filtered = external.filter(function (e) {
             var matchFilter = filter === 'all'
                 || (filter === 'returned' && e.status === 'returned')
                 || (filter === 'given' && e.status === 'given')
@@ -1037,8 +1042,8 @@
                 || (e.series && e.series.toLowerCase().indexOf(query) !== -1)
                 || (e.source && e.source.toLowerCase().indexOf(query) !== -1);
 
-            if (matchFilter && matchSearch) filtered.push(e);
-        }
+            return matchFilter && matchSearch;
+        });
 
         filtered.sort(function (a, b) {
             switch (sortBy) {
@@ -1060,15 +1065,11 @@
             return;
         }
 
-        var statusLabels = { 'returned': '📤 Retiré', 'given': '🎁 Rendu', 'kept': '📚 Laissé' };
-        var statusClasses = { 'returned': 'ext-returned', 'given': 'ext-given', 'kept': 'ext-kept' };
         var parts = [];
-
         for (var j = 0; j < filtered.length; j++) {
             var it = filtered[j];
-            var sc = statusClasses[it.status] || 'ext-returned';
+            var sc = EXT_STATUS_CLASSES[it.status] || 'ext-returned';
             var sourceIcon = SOURCE_ICONS[it.source] || '📚';
-            var tomeDisplay = it.tome ? 'Tome ' + it.tome + (it.totalTomes ? '/' + it.totalTomes : '') : '';
 
             parts.push(
                 '<div class="book-card ' + sc + '">' +
@@ -1077,9 +1078,9 @@
                 '<p class="author">par ' + escapeHTML(it.author) + '</p>' +
                 '<div class="wish-tags">' +
                 '<span class="genre-tag">' + escapeHTML(it.genre) + '</span>' +
-                '<span class="status-badge ' + sc + '">' + (statusLabels[it.status] || '📖') + '</span>' +
+                '<span class="status-badge ' + sc + '">' + (EXT_STATUS_LABELS[it.status] || '📖') + '</span>' +
                 (it.source ? '<span class="source-tag">' + sourceIcon + ' ' + escapeHTML(it.source) + '</span>' : '') +
-                (tomeDisplay ? '<span class="tome-tag">' + tomeDisplay + '</span>' : '') +
+                buildTomeHtml(it.tome, it.totalTomes) +
                 (it.series ? '<span class="saga-tag">📖 ' + escapeHTML(it.series) + '</span>' : '') +
                 (it.wantToBuy ? '<span class="want-buy-badge">🛒 À acheter</span>' : '') +
                 '</div>' +
@@ -1087,9 +1088,6 @@
                 (it.notes ? '<p class="wish-notes">📝 ' + escapeHTML(it.notes) + '</p>' : '') +
                 '<div class="actions">' +
                 '<button data-action="rateExt" data-id="' + it.id + '" class="btn-rate" type="button">⭐ ' + (it.rating > 0 ? 'Modifier note' : 'Noter') + '</button>' +
-                (it.status !== 'returned' ? '<button data-action="changeExtStatus" data-id="' + it.id + '" data-value="returned" class="btn-returned" type="button">📤 Retiré</button>' : '') +
-                (it.status !== 'given' ? '<button data-action="changeExtStatus" data-id="' + it.id + '" data-value="given" class="btn-given" type="button">🎁 Rendu</button>' : '') +
-                (it.status !== 'kept' ? '<button data-action="changeExtStatus" data-id="' + it.id + '" data-value="kept" class="btn-kept" type="button">📚 Laissé</button>' : '') +
                 '<button data-action="toggleExtBuy" data-id="' + it.id + '" class="btn-want-buy" type="button">' + (it.wantToBuy ? '❌ Retirer wishlist' : '🛒 Ajouter wishlist') + '</button>' +
                 '<button data-action="editExt" data-id="' + it.id + '" class="btn-edit" type="button">✏️ Modifier</button>' +
                 '</div></div>'
@@ -1128,20 +1126,8 @@
 
     function filterExt(f, btn) {
         state.extFilter = f;
-        var btns = document.querySelectorAll('#page-external .filter-btn');
-        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-        if (btn) btn.classList.add('active');
+        setActiveFilter('#page-external', btn);
         renderExternal();
-    }
-
-    function changeExtStatus(id, newStatus) {
-        var item = findById(external, id);
-        if (!item) return;
-        item.status = newStatus;
-        saveExternal();
-        renderAll();
-        var labels = { 'returned': '📤 Retiré', 'given': '🎁 Rendu', 'kept': '📚 Laissé' };
-        showToast((labels[newStatus] || '✅') + ' !');
     }
 
     function toggleExtWantBuy(id) {
@@ -1185,9 +1171,9 @@
         if (!b) return;
 
         setText('modalExtBookTitle', b.title);
-        var rv = $('extBookReview'); if (rv) rv.value = b.review || '';
-        var ds = $('extDateStart'); if (ds) ds.value = b.dateStart || '';
-        var de = $('extDateEnd'); if (de) de.value = b.dateEnd || '';
+        setFormVal('extBookReview', b.review || '');
+        setFormVal('extDateStart', b.dateStart || '');
+        setFormVal('extDateEnd', b.dateEnd || '');
 
         if (b.rating > 0) state.selectedExtRating = b.rating;
         updateExtStarsDisplay();
@@ -1204,7 +1190,6 @@
 
     function confirmExtRating() {
         if (!state.selectedExtRating) { showToast('⚠️ Sélectionne au moins 1 étoile !'); return; }
-
         var b = findById(external, state.ratingExtBookId);
         if (!b) return;
 
@@ -1220,7 +1205,7 @@
     }
 
     // ============================================================
-    //  SAGAS
+    //  SAGAS (persos + externes)
     // ============================================================
     function renderSagas() {
         var container = $('sagasList');
@@ -1228,29 +1213,68 @@
 
         var query = getVal('sagaSearchInput').toLowerCase();
         var allSeries = getAllSeries();
-        var allKeys = Object.keys(allSeries);
+        var extSeries = getExternalSeries();
 
-        var seriesList = [];
-        for (var i = 0; i < allKeys.length; i++) {
-            var s = allSeries[allKeys[i]];
-            if (!query || s.name.toLowerCase().indexOf(query) !== -1 || s.author.toLowerCase().indexOf(query) !== -1) {
-                seriesList.push(s);
-            }
+        // Sagas persos filtrées par recherche
+        var seriesList = filterSagasByQuery(allSeries, query);
+        var extSagasList = filterSagasByQuery(extSeries, query);
+
+        // Stats globales (avant filtrage par catégorie)
+        updateSagasStats(allSeries, extSagasList);
+
+        // Filtrage par catégorie
+        var displayList;
+        switch (state.sagaFilter) {
+            case 'external':    displayList = extSagasList; break;
+            case 'completed':   displayList = seriesList.filter(function (s) { return s.isCompleted; }); break;
+            case 'inProgress':  displayList = seriesList.filter(function (s) { return s.isStarted && !s.isCompleted; }); break;
+            case 'notStarted':  displayList = seriesList.filter(function (s) { return !s.isStarted; }); break;
+            default:            displayList = seriesList;
         }
 
-        var filter = state.sagaFilter;
-        if (filter === 'completed') seriesList = seriesList.filter(function (s) { return s.isCompleted; });
-        else if (filter === 'inProgress') seriesList = seriesList.filter(function (s) { return s.isStarted && !s.isCompleted; });
-        else if (filter === 'notStarted') seriesList = seriesList.filter(function (s) { return !s.isStarted; });
+        if (!displayList.length) {
+            container.innerHTML = '<div class="empty-state"><span class="emoji">📚</span><p>Aucune saga trouvée.</p></div>';
+            return;
+        }
 
-        var allValues = [];
-        for (var a = 0; a < allKeys.length; a++) allValues.push(allSeries[allKeys[a]]);
+        // Tri : en cours > pas commencées > terminées
+        displayList.sort(function (a, b) {
+            if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+            return b.progress - a.progress;
+        });
 
+        var parts = [];
+        for (var si = 0; si < displayList.length; si++) {
+            parts.push(buildSagaCard(displayList[si]));
+        }
+        container.innerHTML = parts.join('');
+    }
+
+    function filterSagasByQuery(seriesMap, query) {
+        var list = [];
+        var keys = Object.keys(seriesMap);
+        for (var i = 0; i < keys.length; i++) {
+            var s = seriesMap[keys[i]];
+            if (!query || s.name.toLowerCase().indexOf(query) !== -1 || s.author.toLowerCase().indexOf(query) !== -1) {
+                list.push(s);
+            }
+        }
+        return list;
+    }
+
+    function updateSagasStats(allSeries, extSagasList) {
+        var allValues = Object.values(allSeries);
         var completedCount = 0, inProgressCount = 0, totalTomes = 0;
+
         for (var t = 0; t < allValues.length; t++) {
             if (allValues[t].isCompleted) completedCount++;
             else if (allValues[t].isStarted) inProgressCount++;
             totalTomes += allValues[t].ownedCount;
+        }
+
+        var extTomesCount = 0;
+        for (var etc = 0; etc < extSagasList.length; etc++) {
+            extTomesCount += extSagasList[etc].books.length;
         }
 
         setText('sagasTotalStat', allValues.length);
@@ -1258,101 +1282,97 @@
         setText('sagasInProgressStat', inProgressCount);
         setText('sagasTotalTomes', totalTomes);
         setText('sagasCount', allValues.length);
+        setText('sagasExtStat', extSagasList.length);
+        setText('sagasExtTomes', extTomesCount);
+    }
 
-        if (!seriesList.length) {
-            container.innerHTML = '<div class="empty-state"><span class="emoji">📚</span><p>Aucune saga trouvée.</p></div>';
-            return;
+    function buildSagaCard(sg) {
+        // Tomes possédés / lus
+        var tomesHtml = '';
+        for (var ti = 0; ti < sg.books.length; ti++) {
+            var bk = sg.books[ti];
+            var isRead = sg.isExternal ? true : (bk.status === 'read');
+            tomesHtml +=
+                '<div class="tome-item">' +
+                '<span class="tome-title">' + (bk.tome ? 'T' + bk.tome + ' — ' : '') + escapeHTML(bk.title) + '</span>' +
+                (bk.rating > 0 ? '<span class="tome-rating">' + '★'.repeat(bk.rating) + '</span>' : '') +
+                '<span class="tome-status ' + (isRead ? 'read-tome' : 'unread-tome') + '">' + (isRead ? '✅' : '📖') + '</span>' +
+                '</div>';
         }
 
-        seriesList.sort(function (a, b) {
-            if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
-            return b.progress - a.progress;
-        });
-
-        var parts = [];
-        for (var si = 0; si < seriesList.length; si++) {
-            var sg = seriesList[si];
-
-            var tomesHtml = '';
-            for (var ti = 0; ti < sg.books.length; ti++) {
-                var bk = sg.books[ti];
-                tomesHtml +=
-                    '<div class="tome-item">' +
-                    '<span class="tome-title">' + (bk.tome ? 'T' + bk.tome + ' — ' : '') + escapeHTML(bk.title) + '</span>' +
-                    (bk.rating > 0 ? '<span class="tome-rating">' + '★'.repeat(bk.rating) + '</span>' : '') +
-                    '<span class="tome-status ' + (bk.status === 'read' ? 'read-tome' : 'unread-tome') + '">' + (bk.status === 'read' ? '✅' : '📖') + '</span>' +
-                    '</div>';
-            }
-
-            var ownedNums = [];
-            for (var oi = 0; oi < sg.books.length; oi++) { if (sg.books[oi].tome) ownedNums.push(sg.books[oi].tome); }
-
-            var missingTomes = [];
-            if (sg.totalTomes > 0) {
-                for (var mi = 1; mi <= sg.totalTomes; mi++) {
-                    if (ownedNums.indexOf(mi) === -1) missingTomes.push(mi);
-                }
-            }
-
-            var missingHtml = '';
-            if (missingTomes.length > 0) {
-                var missingItems = '';
-                for (var mj = 0; mj < missingTomes.length; mj++) {
-                    missingItems += '<div class="tome-item missing-tome"><span class="tome-title missing-title">T' + missingTomes[mj] + ' — ???</span><span class="tome-status missing-status">❌ Manquant</span></div>';
-                }
-                missingHtml =
-                    '<div class="missing-section">' +
-                    '<div class="missing-header"><span class="missing-icon">⚠️</span><span class="missing-label">' +
-                    missingTomes.length + ' tome' + (missingTomes.length > 1 ? 's' : '') + ' manquant' + (missingTomes.length > 1 ? 's' : '') +
-                    '</span></div><div class="missing-list">' + missingItems + '</div></div>';
-            }
-
-            var compIcon = '';
-            if (sg.isCompleted) compIcon = '<span class="saga-complete-badge">🎉 Terminée !</span>';
-            else if (missingTomes.length === 0 && sg.ownedCount >= sg.totalTomes) compIcon = '<span class="saga-all-owned-badge">📚 Tous possédés</span>';
-
-            var ratedBooks = sg.books.filter(function (b) { return b.rating > 0; });
-            var avg = ratedBooks.length > 0 ? (ratedBooks.reduce(function (sum, b) { return sum + b.rating; }, 0) / ratedBooks.length).toFixed(1) : null;
-            var missingCount = sg.totalTomes - sg.ownedCount;
-
-            parts.push(
-                '<div class="saga-card ' + (sg.isCompleted ? 'saga-completed' : '') + ' ' + (missingTomes.length > 0 ? 'saga-has-missing' : '') + '">' +
-                '<h3>📖 ' + escapeHTML(sg.name) + '</h3>' +
-                '<p class="saga-author">par ' + escapeHTML(sg.author) + '</p>' +
-                '<span class="genre-tag">' + escapeHTML(sg.genre) + '</span>' + compIcon +
-                '<div class="saga-info">' +
-                '<span>📚 ' + sg.ownedCount + '/' + sg.totalTomes + ' possédés</span>' +
-                '<span>✅ ' + sg.readCount + ' lus</span>' +
-                (missingCount > 0 ? '<span class="missing-count-tag">❌ ' + missingCount + ' manquants</span>' : '') +
-                (avg ? '<span>⭐ ' + avg + '/5</span>' : '') +
-                '</div>' +
-                '<p class="progress-text">' + sg.progress + '% lu ' + (sg.isCompleted ? '🎉' : '') + '</p>' +
-                '<div class="progress-bar"><div class="progress-fill" style="width:' + Math.min(sg.progress, 100) + '%"></div></div>' +
-                '<div class="tomes-list"><p class="tomes-section-title">📗 Tomes possédés (' + sg.ownedCount + ')</p>' + tomesHtml + '</div>' +
-                missingHtml +
-                '<div class="actions"><button data-action="editSaga" data-value="' + sg.key + '" class="btn-edit-saga" type="button">✏️ Modifier tomes prévus</button></div>' +
-                '</div>'
-            );
+        // Tomes manquants
+        var ownedNums = [];
+        for (var oi = 0; oi < sg.books.length; oi++) {
+            if (sg.books[oi].tome) ownedNums.push(sg.books[oi].tome);
         }
-        container.innerHTML = parts.join('');
+
+        var missingTomes = [];
+        if (sg.totalTomes > 0) {
+            for (var mi = 1; mi <= sg.totalTomes; mi++) {
+                if (ownedNums.indexOf(mi) === -1) missingTomes.push(mi);
+            }
+        }
+
+        var missingHtml = '';
+        if (missingTomes.length > 0) {
+            var missingItems = '';
+            for (var mj = 0; mj < missingTomes.length; mj++) {
+                missingItems += '<div class="tome-item missing-tome"><span class="tome-title missing-title">T' + missingTomes[mj] + ' — ???</span><span class="tome-status missing-status">❌ Manquant</span></div>';
+            }
+            missingHtml =
+                '<div class="missing-section">' +
+                '<div class="missing-header"><span class="missing-icon">⚠️</span><span class="missing-label">' +
+                missingTomes.length + ' tome' + (missingTomes.length > 1 ? 's' : '') + ' manquant' + (missingTomes.length > 1 ? 's' : '') +
+                '</span></div><div class="missing-list">' + missingItems + '</div></div>';
+        }
+
+        // Badge
+        var compIcon = '';
+        if (sg.isExternal) compIcon = '<span class="saga-ext-badge">📖 Saga empruntée</span>';
+        else if (sg.isCompleted) compIcon = '<span class="saga-complete-badge">🎉 Terminée !</span>';
+        else if (missingTomes.length === 0 && sg.ownedCount >= sg.totalTomes) compIcon = '<span class="saga-all-owned-badge">📚 Tous possédés</span>';
+
+        // Note moyenne
+        var ratedBooks = sg.books.filter(function (b) { return b.rating > 0; });
+        var avg = ratedBooks.length > 0
+            ? (ratedBooks.reduce(function (sum, b) { return sum + b.rating; }, 0) / ratedBooks.length).toFixed(1)
+            : null;
+        var missingCount = sg.totalTomes - sg.ownedCount;
+
+        var infoLabel = sg.isExternal ? 'lus' : 'possédés';
+        var readLabel = sg.isExternal ? '' : '<span>✅ ' + sg.readCount + ' lus</span>';
+        var tomeLabel = sg.isExternal ? 'lus' : 'possédés';
+
+        return '<div class="saga-card ' + (sg.isCompleted ? 'saga-completed' : '') + ' ' + (missingTomes.length > 0 ? 'saga-has-missing' : '') + ' ' + (sg.isExternal ? 'saga-external' : '') + '">' +
+            '<h3>📖 ' + escapeHTML(sg.name) + '</h3>' +
+            '<p class="saga-author">par ' + escapeHTML(sg.author) + '</p>' +
+            '<span class="genre-tag">' + escapeHTML(sg.genre) + '</span>' + compIcon +
+            '<div class="saga-info">' +
+            '<span>📚 ' + sg.ownedCount + '/' + sg.totalTomes + ' ' + infoLabel + '</span>' +
+            readLabel +
+            (missingCount > 0 ? '<span class="missing-count-tag">❌ ' + missingCount + ' manquants</span>' : '') +
+            (avg ? '<span>⭐ ' + avg + '/5</span>' : '') +
+            '</div>' +
+            '<p class="progress-text">' + sg.progress + '% ' + (sg.isExternal ? 'lus' : 'lu') + ' ' + (sg.isCompleted ? '🎉' : '') + '</p>' +
+            '<div class="progress-bar"><div class="progress-fill" style="width:' + Math.min(sg.progress, 100) + '%"></div></div>' +
+            '<div class="tomes-list"><p class="tomes-section-title">📗 Tomes ' + tomeLabel + ' (' + sg.ownedCount + ')</p>' + tomesHtml + '</div>' +
+            missingHtml +
+            (sg.isExternal ? '' : '<div class="actions"><button data-action="editSaga" data-value="' + sg.key + '" class="btn-edit-saga" type="button">✏️ Modifier tomes prévus</button></div>') +
+            '</div>';
     }
 
     function filterSagas(f, btn) {
         state.sagaFilter = f;
-        var btns = document.querySelectorAll('#page-sagas .filter-btn');
-        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-        if (btn) btn.classList.add('active');
+        setActiveFilter('#page-sagas', btn);
         renderSagas();
     }
 
     function openEditSagaModal(key) {
         state.editSagaKey = key;
-        var allSeries = getAllSeries();
-        var s = allSeries[key];
+        var s = getAllSeries()[key];
         if (!s) return;
         setText('editSagaTitle', s.name);
-        var t = $('editSagaTotalTomes');
-        if (t) t.value = s.totalTomes;
+        setFormVal('editSagaTotalTomes', s.totalTomes);
         openModal('editSagaModal');
     }
 
@@ -1379,6 +1399,7 @@
         var sortBy = getRawVal('authorSortSelect') || 'count';
         var allSeries = getAllSeries();
 
+        // Regroupement par auteur
         var authorMap = {};
         for (var i = 0; i < books.length; i++) {
             var key = books[i].author.trim();
@@ -1391,6 +1412,7 @@
             authorMap[key2].extBooks.push(external[i2]);
         }
 
+        // Construction des auteurs enrichis
         var authors = [];
         var aKeys = Object.keys(authorMap);
         for (var j = 0; j < aKeys.length; j++) {
@@ -1432,6 +1454,7 @@
             }
         });
 
+        // Stats
         setText('authorsTotal', authors.length);
         if (authors.length > 0) {
             var sorted = authors.slice().sort(function (a, b) { return b.totalBooks - a.totalBooks; });
@@ -1450,60 +1473,60 @@
 
         var parts = [];
         for (var ai = 0; ai < authors.length; ai++) {
-            var au = authors[ai];
-
-            var allBooksList = [];
-            for (var b1 = 0; b1 < au.books.length; b1++) allBooksList.push({ book: au.books[b1], isExternal: false });
-            for (var b2 = 0; b2 < au.extBooks.length; b2++) allBooksList.push({ book: au.extBooks[b2], isExternal: true });
-            allBooksList.sort(function (x, y) { return x.book.title.localeCompare(y.book.title); });
-
-            var booksHtml = '';
-            for (var bi = 0; bi < allBooksList.length; bi++) {
-                var bkObj = allBooksList[bi];
-                var bk = bkObj.book;
-                var statusCls = bkObj.isExternal ? 'ab-ext' : (bk.status === 'read' ? 'ab-read' : 'ab-toread');
-                var statusIcon = bkObj.isExternal ? '📖' : (bk.status === 'read' ? '✅' : '📖');
-                var extLabel = bkObj.isExternal ? ' (externe)' : '';
-
-                booksHtml +=
-                    '<div class="author-book-item">' +
-                    '<span class="ab-title">' + escapeHTML(bk.title) +
-                    (bk.tome ? ' (T' + bk.tome + ')' : '') +
-                    (bk.series ? ' — ' + escapeHTML(bk.series) : '') + extLabel +
-                    '</span>' +
-                    '<span class="ab-status ' + statusCls + '">' + statusIcon + '</span>' +
-                    (bk.rating > 0 ? '<span class="ab-rating">' + '★'.repeat(bk.rating) + '</span>' : '') +
-                    '</div>';
-            }
-
-            var seriesHtml = '';
-            if (au.authorSeries.length > 0) {
-                var seriesParts = [];
-                for (var si = 0; si < au.authorSeries.length; si++) {
-                    seriesParts.push(escapeHTML(au.authorSeries[si].name) + ' (' + au.authorSeries[si].readCount + '/' + au.authorSeries[si].totalTomes + ')');
-                }
-                seriesHtml = '<p class="author-series">📖 Sagas : ' + seriesParts.join(', ') + '</p>';
-            }
-
-            var uid = 'au_' + ai + '_' + Math.random().toString(36).substr(2, 6);
-
-            parts.push(
-                '<div class="author-card">' +
-                '<h3>✍️ ' + escapeHTML(au.name) + '</h3>' +
-                '<div class="author-stats">' +
-                '<div class="author-stat"><span class="author-stat-num">' + au.totalBooks + '</span><span class="author-stat-label">Livres</span></div>' +
-                '<div class="author-stat"><span class="author-stat-num">' + au.readBooks + '</span><span class="author-stat-label">Lus</span></div>' +
-                '<div class="author-stat"><span class="author-stat-num">' + (au.avgRating > 0 ? au.avgRating.toFixed(1) + '⭐' : '-') + '</span><span class="author-stat-label">Note</span></div>' +
-                '<div class="author-stat"><span class="author-stat-num">' + au.authorSeries.length + '</span><span class="author-stat-label">Sagas</span></div>' +
-                '</div>' + seriesHtml +
-                (au.totalBooks > 0
-                    ? '<button data-action="toggleAuthor" data-value="' + uid + '" class="toggle-books-btn" type="button">📚 Voir les ' + au.totalBooks + ' livres</button>' +
-                      '<div class="author-books-container" id="' + uid + '">' + booksHtml + '</div>'
-                    : '') +
-                '</div>'
-            );
+            parts.push(buildAuthorCard(authors[ai], ai));
         }
         container.innerHTML = parts.join('');
+    }
+
+    function buildAuthorCard(au, index) {
+        var allBooksList = [];
+        for (var b1 = 0; b1 < au.books.length; b1++) allBooksList.push({ book: au.books[b1], isExternal: false });
+        for (var b2 = 0; b2 < au.extBooks.length; b2++) allBooksList.push({ book: au.extBooks[b2], isExternal: true });
+        allBooksList.sort(function (x, y) { return x.book.title.localeCompare(y.book.title); });
+
+        var booksHtml = '';
+        for (var bi = 0; bi < allBooksList.length; bi++) {
+            var bkObj = allBooksList[bi];
+            var bk = bkObj.book;
+            var statusCls = bkObj.isExternal ? 'ab-ext' : (bk.status === 'read' ? 'ab-read' : 'ab-toread');
+            var statusIcon = bkObj.isExternal ? '📖' : (bk.status === 'read' ? '✅' : '📖');
+            var extLabel = bkObj.isExternal ? ' (externe)' : '';
+
+            booksHtml +=
+                '<div class="author-book-item">' +
+                '<span class="ab-title">' + escapeHTML(bk.title) +
+                (bk.tome ? ' (T' + bk.tome + ')' : '') +
+                (bk.series ? ' — ' + escapeHTML(bk.series) : '') + extLabel +
+                '</span>' +
+                '<span class="ab-status ' + statusCls + '">' + statusIcon + '</span>' +
+                (bk.rating > 0 ? '<span class="ab-rating">' + '★'.repeat(bk.rating) + '</span>' : '') +
+                '</div>';
+        }
+
+        var seriesHtml = '';
+        if (au.authorSeries.length > 0) {
+            var seriesParts = [];
+            for (var si = 0; si < au.authorSeries.length; si++) {
+                seriesParts.push(escapeHTML(au.authorSeries[si].name) + ' (' + au.authorSeries[si].readCount + '/' + au.authorSeries[si].totalTomes + ')');
+            }
+            seriesHtml = '<p class="author-series">📖 Sagas : ' + seriesParts.join(', ') + '</p>';
+        }
+
+        var uid = 'au_' + index + '_' + Math.random().toString(36).substr(2, 6);
+
+        return '<div class="author-card">' +
+            '<h3>✍️ ' + escapeHTML(au.name) + '</h3>' +
+            '<div class="author-stats">' +
+            '<div class="author-stat"><span class="author-stat-num">' + au.totalBooks + '</span><span class="author-stat-label">Livres</span></div>' +
+            '<div class="author-stat"><span class="author-stat-num">' + au.readBooks + '</span><span class="author-stat-label">Lus</span></div>' +
+            '<div class="author-stat"><span class="author-stat-num">' + (au.avgRating > 0 ? au.avgRating.toFixed(1) + '⭐' : '-') + '</span><span class="author-stat-label">Note</span></div>' +
+            '<div class="author-stat"><span class="author-stat-num">' + au.authorSeries.length + '</span><span class="author-stat-label">Sagas</span></div>' +
+            '</div>' + seriesHtml +
+            (au.totalBooks > 0
+                ? '<button data-action="toggleAuthor" data-value="' + uid + '" class="toggle-books-btn" type="button">📚 Voir les ' + au.totalBooks + ' livres</button>' +
+                  '<div class="author-books-container" id="' + uid + '">' + booksHtml + '</div>'
+                : '') +
+            '</div>';
     }
 
     function toggleAuthorBooks(uid, btn) {
@@ -1530,6 +1553,7 @@
             notes: getVal('wishNotes'),
             series: getVal('wishSeries') || null,
             tome: parseInt(getRawVal('wishTome')) || null,
+            totalTomes: parseInt(getRawVal('wishTotalTomes')) || null,
             status: 'toBuy', dateAdded: nowDateStr(), dateBought: null
         });
 
@@ -1549,9 +1573,7 @@
         var query = getVal('wishSearchInput').toLowerCase();
         var filter = state.wishlistFilter;
 
-        var filtered = [];
-        for (var i = 0; i < wishlist.length; i++) {
-            var it = wishlist[i];
+        var filtered = wishlist.filter(function (it) {
             var matchFilter = filter === 'all'
                 || (filter === 'toBuy' && it.status === 'toBuy')
                 || (filter === 'bought' && it.status === 'bought');
@@ -1563,8 +1585,8 @@
                 || (it.series && it.series.toLowerCase().indexOf(query) !== -1)
                 || (it.format && it.format.toLowerCase().indexOf(query) !== -1);
 
-            if (matchFilter && matchSearch) filtered.push(it);
-        }
+            return matchFilter && matchSearch;
+        });
 
         filtered.sort(function (a, b) {
             if (a.status !== b.status) return a.status === 'toBuy' ? -1 : 1;
@@ -1576,10 +1598,7 @@
             return;
         }
 
-        var pl = { 3: '🔴 Haute', 2: '🟡 Moyenne', 1: '🟢 Basse' };
-        var pc = { 3: 'high', 2: 'medium', 1: 'low' };
         var parts = [];
-
         for (var j = 0; j < filtered.length; j++) {
             var it = filtered[j];
             var sc = it.status === 'bought' ? 'wish-bought' : 'wish-to-buy';
@@ -1595,8 +1614,8 @@
                 '<span class="status-badge ' + sc + '">' + sl + '</span>' +
                 getFormatHtml(it.format) +
                 (it.price > 0 ? '<span class="price-tag">' + it.price.toFixed(2) + ' €</span>' : '') +
-                '<span class="priority-tag ' + (pc[it.priority] || 'medium') + '">' + (pl[it.priority] || '🟡 Moyenne') + '</span>' +
-                (it.tome ? '<span class="tome-tag">Tome ' + it.tome + '</span>' : '') +
+                '<span class="priority-tag ' + (PRIORITY_CLASSES[it.priority] || 'medium') + '">' + (PRIORITY_LABELS[it.priority] || '🟡 Moyenne') + '</span>' +
+                buildTomeHtml(it.tome, it.totalTomes) +
                 (it.series ? '<span class="saga-tag">📖 ' + escapeHTML(it.series) + '</span>' : '') +
                 '</div>' +
                 (it.notes ? '<p class="wish-notes">📝 ' + escapeHTML(it.notes) + '</p>' : '') +
@@ -1614,9 +1633,7 @@
 
     function filterWishlist(f, btn) {
         state.wishlistFilter = f;
-        var btns = document.querySelectorAll('#page-wishlist .filter-btn');
-        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-        if (btn) btn.classList.add('active');
+        setActiveFilter('#page-wishlist', btn);
         renderWishlist();
     }
 
@@ -1674,13 +1691,14 @@
         var item = findById(wishlist, state.transferBookId);
         if (!item) return;
 
-        for (var j = 0; j < books.length; j++) {
-            if (books[j].title.toLowerCase() === item.title.toLowerCase() &&
-                books[j].author.toLowerCase() === item.author.toLowerCase()) {
-                showToast('⚠️ Déjà dans la biblio !');
-                closeModal('transferModal');
-                return;
-            }
+        var exists = books.some(function (b) {
+            return b.title.toLowerCase() === item.title.toLowerCase() &&
+                   b.author.toLowerCase() === item.author.toLowerCase();
+        });
+        if (exists) {
+            showToast('⚠️ Déjà dans la biblio !');
+            closeModal('transferModal');
+            return;
         }
 
         books.push({
@@ -1695,6 +1713,7 @@
         if (item.series) {
             var key = getSeriesKey(item.series);
             if (!sagasMeta[key]) sagasMeta[key] = {};
+            if (item.totalTomes) sagasMeta[key].totalTomes = item.totalTomes;
             saveSagasMeta();
         }
 
@@ -1730,7 +1749,6 @@
         }
 
         var extReadCount = external.length;
-
         for (var e = 0; e < external.length; e++) {
             if (external[e].rating > 0) { rSum += external[e].rating; rCount++; }
         }
@@ -1794,14 +1812,12 @@
         b.series = newSeries || null;
         b.tome = parseInt(getRawVal('editBookTome')) || null;
 
+        // Nettoyage ancienne saga
         if (oldSeries && oldSeries !== newSeries) {
             var oldKey = getSeriesKey(oldSeries);
-            var hasOthers = false;
-            for (var i = 0; i < books.length; i++) {
-                if (books[i].series && getSeriesKey(books[i].series) === oldKey && books[i].id !== b.id) {
-                    hasOthers = true; break;
-                }
-            }
+            var hasOthers = books.some(function (x) {
+                return x.series && getSeriesKey(x.series) === oldKey && x.id !== b.id;
+            });
             if (!hasOthers) delete sagasMeta[oldKey];
         }
 
@@ -1833,6 +1849,7 @@
         setFormVal('editWishPriority', it.priority || 2);
         setFormVal('editWishSeries', it.series || '');
         setFormVal('editWishTome', it.tome || '');
+        setFormVal('editWishTotalTomes', it.totalTomes || '');
         setFormVal('editWishPrice', it.price || '');
         setFormVal('editWishNotes', it.notes || '');
 
@@ -1854,6 +1871,7 @@
         it.priority = parseInt(getRawVal('editWishPriority')) || 2;
         it.series = getVal('editWishSeries') || null;
         it.tome = parseInt(getRawVal('editWishTome')) || null;
+        it.totalTomes = parseInt(getRawVal('editWishTotalTomes')) || null;
         it.price = parseFloat(getRawVal('editWishPrice')) || 0;
         it.notes = getVal('editWishNotes');
 
@@ -1876,6 +1894,7 @@
         setFormVal('editExtAuthor', it.author);
         setFormVal('editExtGenre', it.genre || 'Roman');
         setFormVal('editExtSource', it.source || 'Bibliothèque');
+        setFormVal('editExtStatus', it.status || 'returned');
         setFormVal('editExtSeries', it.series || '');
         setFormVal('editExtTome', it.tome || '');
         setFormVal('editExtTotalTomes', it.totalTomes || '');
@@ -1896,6 +1915,7 @@
         it.author = author;
         it.genre = getRawVal('editExtGenre');
         it.source = getRawVal('editExtSource');
+        it.status = getRawVal('editExtStatus');
         it.series = getVal('editExtSeries') || null;
         it.tome = parseInt(getRawVal('editExtTome')) || null;
         it.totalTomes = parseInt(getRawVal('editExtTotalTomes')) || null;
@@ -1906,11 +1926,6 @@
         showToast('✅ "' + title + '" modifié !');
         closeModal('editExtModal');
         state.editExtId = null;
-    }
-
-    function setFormVal(id, value) {
-        var el = $(id);
-        if (el) el.value = value;
     }
 
     // ============================================================
