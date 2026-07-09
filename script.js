@@ -1,7 +1,6 @@
 // ============================================================
-//  MA PILE À LIVRES — SCRIPT PRINCIPAL v11.4
-//  Sync avancée : fusion intelligente, suppressions tracées,
-//  sync périodique, multi-appareils sans perte de données
+//  MA PILE À LIVRES — SCRIPT PRINCIPAL v11.5
+//  + Scanner code-barres (Quagga2 + Google Books API)
 // ============================================================
 
 (function () {
@@ -36,7 +35,12 @@
         editExtId: null,
         currentUser: null,
         syncTimeout: null,
-        periodicSyncInterval: null
+        periodicSyncInterval: null,
+        // Scanner
+        scannerActive: false,
+        scannerTarget: 'book', // 'book' | 'ext' | 'wish'
+        lastDetectedCode: null,
+        detectionCount: {}
     };
 
     // ============================================================
@@ -53,6 +57,7 @@
     var SYNC_RETRY_DELAY = 5000;
     var SYNC_PERIODIC_MS = 60000;
     var DELETED_RETENTION_MS = 30 * MS_PER_DAY;
+    var SCANNER_MIN_DETECTIONS = 3;
 
     // ============================================================
     //  HELPERS
@@ -229,11 +234,23 @@
         bindClick('closeEditWishModal', function () { closeModal('editWishModal'); state.editWishId = null; });
         bindClick('closeEditExtModal', function () { closeModal('editExtModal'); state.editExtId = null; });
 
+        // 📷 SCANNER CODE-BARRES
+        bindClick('btnScanBarcode', function () { openScanner('book'); });
+        bindClick('btnScanBarcodeExt', function () { openScanner('ext'); });
+        bindClick('btnScanBarcodeWish', function () { openScanner('wish'); });
+        bindClick('closeScanModal', closeScanner);
+        bindClick('btnCancelScan', closeScanner);
+        bindClick('btnManualISBN', askManualISBN);
+
         // Fermeture par clic overlay
         var overlays = document.querySelectorAll('.modal-overlay');
         for (var i = 0; i < overlays.length; i++) {
             overlays[i].addEventListener('click', function (e) {
-                if (e.target === this) this.classList.remove('active');
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    // Si c'est le scan, on l'arrête aussi
+                    if (this.id === 'scanModal') stopScanner();
+                }
             });
         }
 
@@ -241,7 +258,10 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 var modals = document.querySelectorAll('.modal-overlay.active');
-                for (var i = 0; i < modals.length; i++) modals[i].classList.remove('active');
+                for (var i = 0; i < modals.length; i++) {
+                    modals[i].classList.remove('active');
+                    if (modals[i].id === 'scanModal') stopScanner();
+                }
             }
         });
 
@@ -316,28 +336,274 @@
         var value = btn.getAttribute('data-value');
 
         switch (action) {
-            // Bibliothèque
             case 'markRead':     markAsRead(id); break;
             case 'markUnread':   markAsUnread(id); break;
             case 'deleteBook':   deleteBook(id); break;
             case 'rateBook':     openRatingModal(id); break;
             case 'editBook':     openEditBookModal(id); break;
-            // Externe
             case 'deleteExt':    deleteExternal(id); break;
             case 'rateExt':      openRatingExtModal(id); break;
             case 'editExt':      openEditExtModal(id); break;
             case 'toggleExtBuy': toggleExtWantBuy(id); break;
-            // Wishlist
             case 'deleteWish':   deleteWishlistItem(id); break;
             case 'markBought':   markAsBought(id); break;
             case 'markUnbought': markAsUnbought(id); break;
             case 'transferWish': openTransferModal(id); break;
             case 'editWish':     openEditWishModal(id); break;
-            // Sagas
             case 'editSaga':     openEditSagaModal(value); break;
-            // Auteurs
             case 'toggleAuthor': toggleAuthorBooks(value, btn); break;
         }
+    }
+
+    // ============================================================
+    //  📷 SCANNER DE CODE-BARRES
+    // ============================================================
+    function openScanner(target) {
+        if (typeof Quagga === 'undefined') {
+            showToast('❌ Bibliothèque de scan non chargée. Vérifie ta connexion.');
+            return;
+        }
+
+        // Vérifier le support caméra
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showToast('❌ Ton navigateur ne supporte pas la caméra');
+            return;
+        }
+
+        state.scannerTarget = target || 'book';
+        state.lastDetectedCode = null;
+        state.detectionCount = {};
+
+        openModal('scanModal');
+        setTimeout(startScanner, 400);
+    }
+
+    function closeScanner() {
+        stopScanner();
+        closeModal('scanModal');
+    }
+
+    function startScanner() {
+        var container = $('scannerContainer');
+        if (!container) return;
+
+        var hint = $('scannerHint');
+        if (hint) {
+            hint.textContent = '📷 Ouverture de la caméra...';
+            hint.className = 'scanner-hint';
+        }
+
+        Quagga.init({
+            inputStream: {
+                name: 'Live',
+                type: 'LiveStream',
+                target: container,
+                constraints: {
+                    facingMode: 'environment',
+                    width: { min: 640, ideal: 1280 },
+                    height: { min: 480, ideal: 720 }
+                }
+            },
+            locator: {
+                patchSize: 'medium',
+                halfSample: true
+            },
+            numOfWorkers: navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 2,
+            decoder: {
+                readers: ['ean_reader', 'ean_8_reader']
+            },
+            locate: true
+        }, function (err) {
+            if (err) {
+                console.error('Scanner init error:', err);
+                if (hint) {
+                    hint.textContent = '❌ Impossible d\'accéder à la caméra. Vérifie les permissions.';
+                    hint.className = 'scanner-hint error';
+                }
+                showToast('❌ Erreur caméra : vérifie les permissions');
+                return;
+            }
+            Quagga.start();
+            state.scannerActive = true;
+            if (hint) {
+                hint.textContent = '🔍 Recherche du code-barres...';
+                hint.className = 'scanner-hint';
+            }
+        });
+
+        Quagga.onDetected(handleBarcodeDetected);
+    }
+
+    function stopScanner() {
+        if (state.scannerActive && typeof Quagga !== 'undefined') {
+            try {
+                Quagga.offDetected(handleBarcodeDetected);
+                Quagga.stop();
+            } catch (e) {
+                console.warn('Scanner stop error:', e);
+            }
+            state.scannerActive = false;
+        }
+    }
+
+    function handleBarcodeDetected(result) {
+        if (!result || !result.codeResult) return;
+        var code = result.codeResult.code;
+
+        // Compter les détections pour fiabilité
+        state.detectionCount[code] = (state.detectionCount[code] || 0) + 1;
+
+        if (state.detectionCount[code] < SCANNER_MIN_DETECTIONS) return;
+        if (code === state.lastDetectedCode) return;
+
+        state.lastDetectedCode = code;
+        state.detectionCount = {};
+
+        var hint = $('scannerHint');
+        if (hint) {
+            hint.textContent = '✅ Code détecté : ' + code + ' — Recherche...';
+            hint.className = 'scanner-hint success';
+        }
+
+        // Vibration mobile
+        if (navigator.vibrate) {
+            try { navigator.vibrate(200); } catch (e) {}
+        }
+
+        fetchBookByISBN(code);
+    }
+
+    function askManualISBN() {
+        var isbn = prompt('📖 Entre l\'ISBN du livre (10 ou 13 chiffres) :');
+        if (!isbn || !isbn.trim()) return;
+
+        var cleaned = isbn.replace(/[-\s]/g, '');
+        if (!/^\d{10}$|^\d{13}$/.test(cleaned)) {
+            showToast('⚠️ ISBN invalide (10 ou 13 chiffres attendus)');
+            return;
+        }
+
+        var hint = $('scannerHint');
+        if (hint) {
+            hint.textContent = '🔍 Recherche...';
+            hint.className = 'scanner-hint';
+        }
+        fetchBookByISBN(cleaned);
+    }
+
+    // ============================================================
+    //  RÉCUPÉRATION INFOS LIVRE VIA API
+    // ============================================================
+    function fetchBookByISBN(isbn) {
+        // Essayer Google Books en premier
+        fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.totalItems > 0 && data.items && data.items[0].volumeInfo) {
+                    var info = data.items[0].volumeInfo;
+                    fillScannedBook({
+                        title: info.title || '',
+                        author: (info.authors && info.authors.join(', ')) || '',
+                        genre: guessGenre(info.categories),
+                        isbn: isbn
+                    });
+                    showToast('✅ Livre trouvé !');
+                    closeScanner();
+                } else {
+                    // Fallback vers Open Library
+                    fetchFromOpenLibrary(isbn);
+                }
+            })
+            .catch(function (err) {
+                console.error('Google Books error:', err);
+                fetchFromOpenLibrary(isbn);
+            });
+    }
+
+    function fetchFromOpenLibrary(isbn) {
+        fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var key = 'ISBN:' + isbn;
+                if (data[key]) {
+                    var book = data[key];
+                    var authors = book.authors
+                        ? book.authors.map(function (a) { return a.name; }).join(', ')
+                        : '';
+                    fillScannedBook({
+                        title: book.title || '',
+                        author: authors,
+                        genre: 'Roman',
+                        isbn: isbn
+                    });
+                    showToast('✅ Livre trouvé (Open Library) !');
+                    closeScanner();
+                } else {
+                    var hint = $('scannerHint');
+                    if (hint) {
+                        hint.textContent = '❌ Livre introuvable — Saisie manuelle';
+                        hint.className = 'scanner-hint error';
+                    }
+                    showToast('⚠️ Livre non trouvé — Saisis manuellement');
+                    setTimeout(function () {
+                        closeScanner();
+                        var titleInput = getTargetInput('title');
+                        if (titleInput) titleInput.focus();
+                    }, 1500);
+                }
+            })
+            .catch(function (err) {
+                console.error('Open Library error:', err);
+                showToast('❌ Erreur de connexion');
+            });
+    }
+
+    function guessGenre(categories) {
+        if (!categories || !categories.length) return 'Roman';
+        var cat = categories[0].toLowerCase();
+
+        if (cat.indexOf('fantasy') !== -1) return 'Fantasy';
+        if (cat.indexOf('science') !== -1 && cat.indexOf('fiction') !== -1) return 'SF';
+        if (cat.indexOf('thriller') !== -1) return 'Thriller';
+        if (cat.indexOf('mystery') !== -1 || cat.indexOf('detective') !== -1) return 'Policier';
+        if (cat.indexOf('romance') !== -1) return 'Romance';
+        if (cat.indexOf('young adult') !== -1) return 'Young Adult';
+        if (cat.indexOf('juvenile') !== -1) return 'Jeunesse';
+        if (cat.indexOf('biography') !== -1) return 'Biographie';
+        if (cat.indexOf('philosophy') !== -1) return 'Philosophie';
+        if (cat.indexOf('history') !== -1) return 'Histoire';
+        if (cat.indexOf('poetry') !== -1) return 'Poésie';
+        if (cat.indexOf('comic') !== -1 || cat.indexOf('graphic novel') !== -1) return 'BD';
+        if (cat.indexOf('horror') !== -1) return 'Fantastique';
+        if (cat.indexOf('self-help') !== -1) return 'Dev perso';
+
+        return 'Roman';
+    }
+
+    // Remplit le formulaire selon la cible (book, ext, wish)
+    function getTargetInput(field) {
+        var prefix = state.scannerTarget === 'ext' ? 'ext'
+                   : state.scannerTarget === 'wish' ? 'wish'
+                   : 'book';
+        var capitalize = field.charAt(0).toUpperCase() + field.slice(1);
+        return $(prefix + capitalize);
+    }
+
+    function fillScannedBook(data) {
+        var prefix = state.scannerTarget === 'ext' ? 'ext'
+                   : state.scannerTarget === 'wish' ? 'wish'
+                   : 'book';
+
+        setFormVal(prefix + 'Title', data.title);
+        setFormVal(prefix + 'Author', data.author);
+        if (data.genre) setFormVal(prefix + 'Genre', data.genre);
+
+        // Scroll vers le formulaire
+        var formId = prefix === 'book' ? 'addBookForm'
+                   : prefix === 'ext'  ? 'addExtForm'
+                   : 'addWishlistForm';
+        var form = $(formId);
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     // ============================================================
@@ -1571,7 +1837,7 @@
         btn.textContent = exp ? '📚 Masquer' : '📚 Voir les livres';
     }
 
-     // ============================================================
+    // ============================================================
     //  WISHLIST
     // ============================================================
     function addWishlistItem(e) {
@@ -1998,9 +2264,7 @@
             if (user) {
                 state.currentUser = user;
                 showLoggedUI(user);
-                // Fusion auto à la connexion (sans confirmation)
                 firebasePullData(true);
-                // Démarrer la sync périodique
                 startPeriodicSync();
             } else {
                 state.currentUser = null;
@@ -2100,48 +2364,35 @@
         var merged = {};
         var deletedMap = {};
 
-        // Map des suppressions
         for (var d = 0; d < deletedList.length; d++) {
             deletedMap[deletedList[d].id] = deletedList[d].deletedAt;
         }
 
-        // Items locaux (sauf ceux supprimés)
         for (var i = 0; i < localArr.length; i++) {
             var item = localArr[i];
-            if (!deletedMap[item.id]) {
-                merged[item.id] = item;
-            }
+            if (!deletedMap[item.id]) merged[item.id] = item;
         }
 
-        // Fusion avec items cloud
         for (var j = 0; j < cloudArr.length; j++) {
             var cItem = cloudArr[j];
 
-            // Si supprimé APRÈS modification cloud → on garde la suppression
-            if (deletedMap[cItem.id] && deletedMap[cItem.id] > (cItem.updatedAt || 0)) {
-                continue;
-            }
+            if (deletedMap[cItem.id] && deletedMap[cItem.id] > (cItem.updatedAt || 0)) continue;
 
             if (!merged[cItem.id]) {
                 merged[cItem.id] = cItem;
                 continue;
             }
 
-            // Version la plus récente gagne
             var localItem = merged[cItem.id];
             var localTime = localItem.updatedAt || 0;
             var cloudTime = cItem.updatedAt || 0;
 
-            if (cloudTime > localTime) {
-                merged[cItem.id] = cItem;
-            }
+            if (cloudTime > localTime) merged[cItem.id] = cItem;
         }
 
         var result = [];
         var keys = Object.keys(merged);
-        for (var k = 0; k < keys.length; k++) {
-            result.push(merged[keys[k]]);
-        }
+        for (var k = 0; k < keys.length; k++) result.push(merged[keys[k]]);
         return result;
     }
 
@@ -2156,7 +2407,6 @@
         }
         var result = [];
         var keys = Object.keys(map);
-        // Nettoyer les suppressions vieilles de + 30 jours
         var cutoff = nowTimestamp() - DELETED_RETENTION_MS;
         for (var k = 0; k < keys.length; k++) {
             if (map[keys[k]].deletedAt > cutoff) result.push(map[keys[k]]);
@@ -2200,7 +2450,6 @@
             .then(function (docSnap) {
                 var cloudData = docSnap.exists() ? docSnap.data() : {};
 
-                // Fusionner
                 var mergedBooks = mergeArrays(books, cloudData.books || [], deletedItems.books);
                 var mergedWishlist = mergeArrays(wishlist, cloudData.wishlist || [], deletedItems.wishlist);
                 var mergedExternal = mergeArrays(external, cloudData.external || [], deletedItems.external);
@@ -2213,7 +2462,6 @@
                     external: mergeDeleted(deletedItems.external, cloudDeleted.external || [])
                 };
 
-                // Mettre à jour le local
                 books = mergedBooks;
                 wishlist = mergedWishlist;
                 external = mergedExternal;
@@ -2226,7 +2474,6 @@
                 saveJSON('myBookSagasMeta', sagasMeta);
                 saveDeleted();
 
-                // Envoyer au cloud
                 var data = {
                     books: mergedBooks,
                     wishlist: mergedWishlist,
@@ -2256,7 +2503,7 @@
     }
 
     // ============================================================
-    //  PULL — Récupération manuelle ou à la connexion
+    //  PULL — Récupération (manuelle ou à la connexion)
     // ============================================================
     function firebasePullData(isInitial) {
         if (!state.currentUser) return;
@@ -2275,7 +2522,6 @@
                 var cloudData = docSnap.data();
 
                 if (!isInitial) {
-                    // Pull manuel : demander confirmation
                     var msg = '⚠️ Récupérer et fusionner avec le cloud ?\n\n' +
                               '• Cloud : ' + (cloudData.books || []).length + ' livres, ' +
                               (cloudData.wishlist || []).length + ' wishlist, ' +
@@ -2290,7 +2536,6 @@
                     }
                 }
 
-                // Fusion (auto à la connexion, ou après confirmation)
                 books = mergeArrays(books, cloudData.books || [], deletedItems.books);
                 wishlist = mergeArrays(wishlist, cloudData.wishlist || [], deletedItems.wishlist);
                 external = mergeArrays(external, cloudData.external || [], deletedItems.external);
@@ -2324,7 +2569,6 @@
                     showToast('⬇️ Fusionné avec succès !');
                 }
 
-                // Renvoyer la fusion au cloud pour synchroniser les 2 côtés
                 setTimeout(function () { firebaseSync(true); }, 500);
             })
             .catch(function (err) {
@@ -2372,7 +2616,6 @@
                     var lastSynced = parseInt(localStorage.getItem('lastSyncedAt') || '0');
 
                     if ((cloudData.lastSync || 0) > lastSynced) {
-                        // Cloud modifié depuis notre dernier sync → fusionner
                         firebaseSync(true);
                     }
                 })
@@ -2389,4 +2632,4 @@
         }
     }
 
-})();
+})(); 
