@@ -64,6 +64,15 @@
 
         <section class="add-section" aria-label="Ajouter un livre">
             <h2>➕ Ajouter un livre</h2>
+
+            <!-- Bouton scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcode">
+                    <span aria-hidden="true">📷</span> Scanner un code-barres
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur et genre</span>
+            </div>
+
             <form id="addBookForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -202,6 +211,15 @@
 
         <section class="add-section" aria-label="Ajouter un livre externe">
             <h2>➕ Ajouter un livre externe</h2>
+
+            <!-- Bouton scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcodeExt">
+                    <span aria-hidden="true">📷</span> Scanner un code-barres
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur et genre</span>
+            </div>
+
             <form id="addExtForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -413,6 +431,15 @@
 
         <section class="add-section" aria-label="Ajouter à la wishlist">
             <h2>➕ Ajouter à la liste d'achats</h2>
+
+            <!-- Bouton scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcodeWish">
+                    <span aria-hidden="true">📷</span> Scanner un code-barres
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur et genre</span>
+            </div>
+
             <form id="addWishlistForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -640,9 +667,9 @@
         <section class="settings-section" aria-label="À propos">
             <h2>ℹ️ À propos</h2>
             <div class="about-card">
-                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.3</p>
+                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.5</p>
                 <p>Fait avec ❤️ — 2025</p>
-                <p class="about-small">Données sauvegardées localement + cloud (Firebase)</p>
+                <p class="about-small">Données sauvegardées localement + cloud (Firebase) — Scanner de code-barres intégré</p>
             </div>
         </section>
     </div>
@@ -650,6 +677,21 @@
     <!-- ============================================================ -->
     <!--  MODALES                                                      -->
     <!-- ============================================================ -->
+
+    <!-- 📷 Modale SCANNER CODE-BARRES -->
+    <div class="modal-overlay" id="scanModal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">
+        <div class="modal">
+            <button class="modal-close" id="closeScanModal" type="button" aria-label="Fermer">✕</button>
+            <h2 id="scanModalTitle">📷 Scanner un livre</h2>
+            <p class="modal-book-title">Pointe la caméra vers le code-barres au dos du livre</p>
+            <div id="scannerContainer" class="scanner-container"></div>
+            <p class="scanner-hint" id="scannerHint" aria-live="polite">🔍 Initialisation de la caméra...</p>
+            <div class="scanner-actions">
+                <button type="button" class="btn btn-import" id="btnManualISBN">⌨️ Saisie manuelle ISBN</button>
+                <button type="button" class="btn btn-danger" id="btnCancelScan">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modale notation livre biblio -->
     <div class="modal-overlay" id="ratingModal" role="dialog" aria-modal="true" aria-labelledby="ratingModalTitle">
@@ -963,8 +1005,13 @@
 
     <!-- Footer -->
     <footer>
-        <p>📚 Ma Pile à Livres v11.3 — Fait avec ❤️ — 2025</p>
+        <p>📚 Ma Pile à Livres v11.5 — Fait avec ❤️ — 2025</p>
     </footer>
+
+    <!-- ============================================================ -->
+    <!--  QUAGGA2 — SCANNER DE CODE-BARRES                             -->
+    <!-- ============================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 
     <!-- ============================================================ -->
     <!--  FIREBASE SDK                                                 -->
