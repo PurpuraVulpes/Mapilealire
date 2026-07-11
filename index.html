@@ -64,6 +64,18 @@
 
         <section class="add-section" aria-label="Ajouter un livre">
             <h2>➕ Ajouter un livre</h2>
+
+            <!-- Boutons scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcode">
+                    <span aria-hidden="true">📷</span> Scanner en direct
+                </button>
+                <button type="button" class="btn btn-scan-photo" id="btnPhotoScan">
+                    <span aria-hidden="true">📸</span> Prendre une photo (iPhone recommandé)
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur, tome et genre</span>
+            </div>
+
             <form id="addBookForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -130,15 +142,43 @@
             </form>
         </section>
 
+        <!-- ============================================================ -->
+        <!--  SECTION TIRAGE ALÉATOIRE (nouvelle version)                 -->
+        <!-- ============================================================ -->
         <section class="random-section" aria-label="Choix aléatoire">
             <h2>🎲 Quel livre lire ?</h2>
             <p>Laisse le hasard décider pour toi !</p>
-            <div class="random-filter">
-                <label for="randomGenreFilter">Genre :</label>
-                <select id="randomGenreFilter"><option value="all">Tous</option></select>
+
+            <div class="random-mode-selector" role="group" aria-label="Type de tirage">
+                <button class="random-mode-btn active" data-random-mode="all" type="button">
+                    🎯 Tous les livres
+                </button>
+                <button class="random-mode-btn" data-random-mode="newSaga" type="button">
+                    ✨ Nouvelle saga
+                </button>
+                <button class="random-mode-btn" data-random-mode="continueSaga" type="button">
+                    📚 Continuer une saga
+                </button>
             </div>
+
             <button class="btn btn-random" id="randomBtn" type="button">🎰 Choisir au hasard</button>
             <div class="random-result" id="randomResult" aria-live="polite"></div>
+        </section>
+
+        <!-- Historique des sagas tirées -->
+        <section class="filter-section" aria-label="Sagas via tirage aléatoire">
+            <h2>🎲 Sagas issues du tirage</h2>
+
+            <div class="random-history-grid">
+                <div class="random-history-col">
+                    <h3 class="random-history-title">✨ Nouvelles sagas commencées</h3>
+                    <div id="randomNewSagasList" class="random-history-list"></div>
+                </div>
+                <div class="random-history-col">
+                    <h3 class="random-history-title">📚 Sagas en cours (tirées)</h3>
+                    <div id="randomContinueSagasList" class="random-history-list"></div>
+                </div>
+            </div>
         </section>
 
         <section class="filter-section" aria-label="Filtres bibliothèque">
@@ -202,6 +242,18 @@
 
         <section class="add-section" aria-label="Ajouter un livre externe">
             <h2>➕ Ajouter un livre externe</h2>
+
+            <!-- Boutons scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcodeExt">
+                    <span aria-hidden="true">📷</span> Scanner en direct
+                </button>
+                <button type="button" class="btn btn-scan-photo" id="btnPhotoScanExt">
+                    <span aria-hidden="true">📸</span> Prendre une photo (iPhone recommandé)
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur, tome et genre</span>
+            </div>
+
             <form id="addExtForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -413,6 +465,18 @@
 
         <section class="add-section" aria-label="Ajouter à la wishlist">
             <h2>➕ Ajouter à la liste d'achats</h2>
+
+            <!-- Boutons scanner code-barres -->
+            <div class="scan-quick-access">
+                <button type="button" class="btn btn-scan" id="btnScanBarcodeWish">
+                    <span aria-hidden="true">📷</span> Scanner en direct
+                </button>
+                <button type="button" class="btn btn-scan-photo" id="btnPhotoScanWish">
+                    <span aria-hidden="true">📸</span> Prendre une photo (iPhone recommandé)
+                </button>
+                <span class="scan-hint-text">💡 Auto-remplit titre, auteur, tome et genre</span>
+            </div>
+
             <form id="addWishlistForm" novalidate>
                 <div class="form-row">
                     <div class="input-group">
@@ -640,9 +704,9 @@
         <section class="settings-section" aria-label="À propos">
             <h2>ℹ️ À propos</h2>
             <div class="about-card">
-                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.3</p>
+                <p><strong>📚 Ma Pile à Livres</strong> — Version 11.8</p>
                 <p>Fait avec ❤️ — 2025</p>
-                <p class="about-small">Données sauvegardées localement + cloud (Firebase)</p>
+                <p class="about-small">Tirage aléatoire intelligent + Scanner photo + Sync multi-appareils</p>
             </div>
         </section>
     </div>
@@ -650,6 +714,24 @@
     <!-- ============================================================ -->
     <!--  MODALES                                                      -->
     <!-- ============================================================ -->
+
+    <!-- 📷 Modale SCANNER CODE-BARRES -->
+    <div class="modal-overlay" id="scanModal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">
+        <div class="modal">
+            <button class="modal-close" id="closeScanModal" type="button" aria-label="Fermer">✕</button>
+            <h2 id="scanModalTitle">📷 Scanner un livre</h2>
+            <p class="modal-book-title">Pointe la caméra vers le code-barres au dos du livre</p>
+            <div id="scannerContainer" class="scanner-container"></div>
+            <p class="scanner-hint" id="scannerHint" aria-live="polite">🔍 Initialisation de la caméra...</p>
+            <div class="scanner-actions">
+                <button type="button" class="btn btn-import" id="btnManualISBN">⌨️ Saisie manuelle ISBN</button>
+                <button type="button" class="btn btn-danger" id="btnCancelScan">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📸 Input caché pour scan photo -->
+    <input type="file" id="photoScanInput" accept="image/*" capture="environment" style="display:none">
 
     <!-- Modale notation livre biblio -->
     <div class="modal-overlay" id="ratingModal" role="dialog" aria-modal="true" aria-labelledby="ratingModalTitle">
@@ -963,8 +1045,13 @@
 
     <!-- Footer -->
     <footer>
-        <p>📚 Ma Pile à Livres v11.3 — Fait avec ❤️ — 2025</p>
+        <p>📚 Ma Pile à Livres v11.8 — Fait avec ❤️ — 2025</p>
     </footer>
+
+    <!-- ============================================================ -->
+    <!--  ZXING — SCANNER DE CODE-BARRES                               -->
+    <!-- ============================================================ -->
+    <script src="https://unpkg.com/@zxing/library@0.21.0/umd/index.min.js"></script>
 
     <!-- ============================================================ -->
     <!--  FIREBASE SDK                                                 -->
